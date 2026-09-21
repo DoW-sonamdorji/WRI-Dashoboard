@@ -1348,19 +1348,56 @@ function safeErr(e) {
 // =====================================================================
 const USERNAME_EMAIL_DOMAIN = "wri-dashboard.bt"; // change if you prefer
 
-// Exceptions: if you created someone's Supabase Auth account using a real
-// email instead of the generated username@wri-dashboard.bt pattern, add
-// them here (exact username → the real email you used). Everyone NOT
-// listed here still uses the generated pattern automatically.
+// Exceptions: these accounts were created in Supabase Auth with a real
+// email address (not the generated username@wri-dashboard.bt pattern), so
+// the plain username is mapped to that email here — exactly like the
+// Admin (Sonam_Dorji). Passwords are NOT stored here; Supabase checks them.
+// Anyone NOT listed here still uses the generated pattern automatically.
 const USERNAME_EMAIL_OVERRIDES = {
+  "Karma_Yangdon": "kyangdon@moenr.gov.bt",
+  "Dechen_Yangden": "dyangden@moenr.gov.bt",
+  "Tashi_Lhamo_Y": "tlhamoy@moenr.gov.bt",
+  "Tenzin_Khorlo": "tkhorlo@moenr.gov.bt",
+  "Dorji_Gyaltshen": "dgyaltshen@moenr.gov.bt",
+  "Rinchen_Namgay": "rinchenn@moenr.gov.bt",
+  "Kinzang_Namgay": "kinzangn@planmoenr.gov.bt",
+  "Saran_Pradhan": "spradhan@moenr.gov.bt",
+  "Ngawang_Dorji": "ngawangdorji@moenr.gov.bt",
+  "Rigzin_Yeshi_Jamtsho": "ryjamtsho@moenr.gov.bt",
+  "Dorji_Khando": "dkhando@moenr.gov.bt",
+  "Sonam_Chophel": "csonam@moenr.gov.bt",
+  "Rada_Wangchuk": "rwangchuk@moenr.gov.bt",
+  "Kinley_Dem": "kdema2010@gmail.com",
+  "Pema_Yuden": "pyuden@moenr.gov.bt",
+  "Norbu_Wangmo": "norbuwangmo@moenr.gov.bt",
+  "Thinley_Wangmo": "thinlae706wangmo@gmail.com",
+  "Gopal_Prasad_Khanal": "gpkhanal@moenr.gov.bt",
+  "Jampel_Dorji": "jampeld@moenr.gov.bt",
+  "Phub_Gyeltshen": "pgyeltshen@moenr.gov.bt",
+  "Sonam_Choden": "sonamchoden@moenr.gov.bt",
+  "Cheten_Thinley": "cthinley@moenr.gov.bt",
+  "Kuenzang_Dorji": "kuenzangd@moenr.gov.bt",
+  "Tenzin_Drukgyel": "tdrukgyel@moenr.gov.bt",
+  "Dechen_Lham": "dechenlham2014@gmail.com",
+  "Nima_Wangchuk": "nimaw@moenr.gov.bt",
   "Sonam_Dorji": "sdorji1@moenr.gov.bt"
 };
 
-function usernameToEmail(username) {
-  const key = username.trim();
-  if (USERNAME_EMAIL_OVERRIDES[key]) return USERNAME_EMAIL_OVERRIDES[key];
-  return key.toLowerCase().replace(/\s+/g, "_") + "@" + USERNAME_EMAIL_DOMAIN;
+// Every email a username might be registered under, most likely first:
+//   • a full email typed in the username box is used as-is
+//   • the real email from the table above (matched ignoring upper/lower case)
+//   • the generated username@wri-dashboard.bt address (fallback, in case that account was created the old way)
+function usernameToEmails(username) {
+  const key = String(username || "").trim();
+  if (key.indexOf("@") > -1) return [key.toLowerCase()];
+  const out = [];
+  const lk = key.toLowerCase();
+  Object.keys(USERNAME_EMAIL_OVERRIDES).forEach(k => { if (k.toLowerCase() === lk) out.push(USERNAME_EMAIL_OVERRIDES[k].toLowerCase()); });
+  const generated = lk.replace(/\s+/g, "_") + "@" + USERNAME_EMAIL_DOMAIN;
+  if (out.indexOf(generated) === -1) out.push(generated);
+  return out;
 }
+function usernameToEmail(username) { return usernameToEmails(username)[0]; }
 
 let CURRENT_PERMISSION = null; // 'admin' | 'staff' | null (visitor)
 let CURRENT_NAME = null;
@@ -1378,7 +1415,14 @@ function doLogin() {
   const p = document.getElementById('loginPass').value;
   if (!u || !p) { document.getElementById("loginErr").textContent = "Enter a username and password."; return; }
   document.getElementById("loginErr").textContent = "Signing in...";
-  supabaseClient.auth.signInWithPassword({ email: usernameToEmail(u), password: p })
+  const emails = usernameToEmails(u);
+  const attempt = async (n) => {
+    const res = await supabaseClient.auth.signInWithPassword({ email: emails[n], password: p });
+    // wrong email/password for this candidate → try the next possible email for this username
+    if (res.error && n + 1 < emails.length && /invalid login credentials/i.test(res.error.message || '')) return attempt(n + 1);
+    return res;
+  };
+  attempt(0)
     .then(({ error }) => {
       if (error) {
         console.error('Login error:', safeErr(error));
