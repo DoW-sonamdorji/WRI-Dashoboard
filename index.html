@@ -1582,7 +1582,7 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
     <div class="filter-group">
       <div class="filter-label">Year(s) to Analyze</div>
       <div class="ms-wrap" id="ms-wrap-dataset">
-        <button type="button" class="ms-trigger" id="ms-trigger-dataset" onclick="dsToggle()">Datasets loading... Atshi Gu Zhu</button>
+        <button type="button" class="ms-trigger" id="ms-trigger-dataset" onclick="dsToggle()">Datasets loading... Atshi Gu Zhu Nang La</button>
         <div class="ms-dropdown" id="ms-dropdown-dataset"></div>
       </div>
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:6px;line-height:1.5;">
@@ -8374,7 +8374,7 @@ function dsUpdateTrigger() {
 async function dsApplySelection() {
   const years = [...DS_STATE];
   if (years.length === 0) return;
-  showLoading('Datasets loading... Atshi Gu Zhu');
+  showLoading('Datasets loading... Atshi Gu Zhu Nang La');
   try {
     for (const y of years) {
       if (!DS_CACHE[y]) {
