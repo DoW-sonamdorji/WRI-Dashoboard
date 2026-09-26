@@ -1282,7 +1282,6 @@ canvas {
     <div class="login-divider"></div>
     <button type="button" onclick="closeLoginScreen()" style="background:none;border:none;color:var(--text-dim);font-size:11px;letter-spacing:1px;cursor:pointer;margin-top:4px;">CONTINUE AS VISITOR</button>
     <div class="login-footer">DEPARTMENT OF WATER · ROYAL GOVERNMENT OF BHUTAN</div>
-    <div id="buildStamp" style="text-align:center;font-size:9px;letter-spacing:1px;opacity:.55;margin-top:6px;font-family:monospace;"></div>
   </div>
 </div>
 
@@ -1297,10 +1296,6 @@ canvas {
 // tell at a glance which version of this file GitHub Pages is actually serving.
 const WRI_BUILD = "2026-09-19 · supabase-url-fix";
 console.info("WRI Dashboard build:", WRI_BUILD);
-window.addEventListener("DOMContentLoaded", () => {
-  const el = document.getElementById("buildStamp");
-  if (el) el.textContent = "BUILD " + WRI_BUILD.toUpperCase() + " · " + new URL(SUPABASE_URL).hostname.split(".")[0];
-});
 const SUPABASE_URL = "https://ndipikjvmvmnszrbxvxj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kaXBpa2p2bXZtbnN6cmJ4dnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NTIyNDMsImV4cCI6MjEwNTMyODI0M30.JM35-1toYLflXixFAWbyYp3fiLjMBQ_vKOrJu1IoVG0";
 // Sanity check: the project ref inside the anon key must match the URL's host.
