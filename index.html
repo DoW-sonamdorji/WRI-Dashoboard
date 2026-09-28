@@ -1412,31 +1412,11 @@ function wriThemeLabel(){
 }
 wriThemeLabel();
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){if(!localStorage.getItem('wriTheme')){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');wriThemeLabel();}});}catch(e){}
-/* PRO POLISH — scroll progress + KPI count-up (display only) */
+/* PRO POLISH — scroll progress bar (display only) */
 (function(){
   var bar=document.createElement('div');bar.id='wriProgress';document.body.appendChild(bar);
   function upd(t){var h=(t.scrollHeight-t.clientHeight);bar.style.width=(h>0?Math.min(100,t.scrollTop/h*100):0)+'%';}
   document.addEventListener('scroll',function(e){var t=e.target===document?document.documentElement:e.target;if(t&&t.scrollHeight)upd(t);},true);
-  var busy=false,re=/^(\D*)([\d,]+(?:\.\d+)?)(\D*)$/;
-  function count(el){
-    if(busy||el.dataset.cu===el.textContent)return;
-    var m=re.exec(el.textContent.trim());if(!m)return;
-    var raw=m[2],dec=(raw.split('.')[1]||'').length,end=parseFloat(raw.replace(/,/g,''));
-    if(!isFinite(end)||end===0||matchMedia('(prefers-reduced-motion:reduce)').matches){el.dataset.cu=el.textContent;return;}
-    var comma=raw.indexOf(',')>-1,final=el.textContent,t0=performance.now(),D=900;
-    (function f(now){
-      var p=Math.min(1,(now-t0)/D),v=end*(1-Math.pow(1-p,3));
-      var s=v.toFixed(dec);if(comma)s=Number(s).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-      busy=true;el.textContent=p<1?m[1]+s+m[3]:final;busy=false;
-      if(p<1)requestAnimationFrame(f);else el.dataset.cu=final;
-    })(t0);
-  }
-  new MutationObserver(function(ms){if(busy)return;ms.forEach(function(r){
-    r.addedNodes.forEach(function(n){if(n.nodeType===1)(n.matches&&n.matches('.kpi-value')?[n]:n.querySelectorAll?n.querySelectorAll('.kpi-value'):[]).forEach(count);});
-    if(r.target.nodeType===1&&r.target.classList&&r.target.classList.contains('kpi-value'))count(r.target);
-    else if(r.target.parentElement&&r.target.parentElement.classList.contains('kpi-value'))count(r.target.parentElement);
-  });}).observe(document.body,{childList:true,subtree:true,characterData:true});
-  document.querySelectorAll('.kpi-value').forEach(count);
 })();
 </script>
 
