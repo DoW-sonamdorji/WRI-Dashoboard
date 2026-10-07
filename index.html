@@ -1727,7 +1727,7 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
     <button class="upload-btn" id="staffLoginBtn" onclick="openLoginScreen()">🔐 Staff / Admin Login</button>
     <button class="upload-btn" id="staffLogoutBtn" onclick="logout()" style="display:none;">🚪 Logout</button>
     <button class="upload-btn admin-only-btn" style="display:none;" onclick="document.getElementById('fileInput').click()">
-      📂 Upload CSV / Excel
+      📂 Upload WRI Data
     </button>
     <button class="upload-btn admin-only-btn" style="display:none;background:linear-gradient(135deg,#fff0f2,#ffe8ea);border:1px solid rgba(224,38,61,0.35);color:#e0263d;font-weight:700;" onclick="clearData()" title="Clear all loaded data">
       🗑️ Clear Data
@@ -2667,6 +2667,7 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
       <div class="pg-tabs" id="pgTabs">
         <button class="pg-tab active" data-t="overview" onclick="pgTab('overview')">Overview</button>
         <button class="pg-tab" data-t="budget" onclick="pgTab('budget')">Budget &amp; Expenditure</button>
+        <button class="pg-tab" data-t="divs" onclick="pgTab('divs')">Division Assignment</button>
         <button class="pg-tab" data-t="update" onclick="pgTab('update')">Update Progress</button>
         <button class="pg-tab" data-t="log" onclick="pgTab('log')">Update Log</button>
       </div>
@@ -2681,6 +2682,7 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
         <div class="panel-card"><div class="chart-title">Expenditure by Object Code</div><div class="pg-twrap" id="pgObcTable"></div></div>
         <div class="panel-card"><div class="chart-title">Expenditure Report History — stored by upload time</div><div class="pg-twrap" id="pgSnapList"></div></div>
       </div>
+      <div class="pg-panel" id="pgP-divs"><div class="panel-card" id="pgDivBox"></div></div>
       <div class="pg-panel" id="pgP-update"><div class="panel-card" id="pgUpdateBox"></div></div>
       <div class="pg-panel" id="pgP-log"><div class="panel-card" id="pgLogBox"></div></div>
     </div>
@@ -2696,11 +2698,17 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
           <div style="font-size:38px;margin-bottom:10px;">📝</div>
           <div style="font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--accent-blue);">Request Water Resources Inventory Data</div>
           <p style="color:var(--text-dim);font-size:13px;line-height:1.7;margin:14px 0 20px;">
-            Use this digital version of the Department of Water's official Data Requisition Form to
-            request specific water resources data. Complete the form, review it, sign it electronically
-            or print and sign by hand, then submit it to the Department by email.
+            Request specific water resources data using the Department of Water's official Data Requisition Form.
+            Choose how you would like to complete it:
           </p>
-          <button class="reset-btn" style="width:auto;padding:12px 30px;" onclick="drGoToStep('form')">START DATA REQUEST →</button>
+          <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+            <button class="reset-btn" style="width:auto;padding:12px 26px;" onclick="drGoToStep('form')">✍ FILL THE FORM ONLINE →</button>
+            <button class="reset-btn" id="drBlankBtn" style="width:auto;padding:12px 26px;background:transparent;color:var(--accent-blue);border:1.5px solid var(--accent-blue);" onclick="drDownloadBlankPdf()">⬇ DOWNLOAD BLANK FORM (PDF)</button>
+          </div>
+          <p style="color:var(--text-dim);font-size:12px;line-height:1.7;margin:16px 0 0;">
+            <b>Fill online:</b> complete the form here, review it, sign electronically or by hand, then email it to the Department.<br>
+            <b>Blank form:</b> an empty copy of the same form to print and fill in by hand.
+          </p>
         </div>
       </div>
 
@@ -9370,6 +9378,16 @@ async function generateDataRequestPDF() {
   }
 }
 
+async function drDownloadBlankPdf() {
+  const btn = document.getElementById('drBlankBtn'), old = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
+  try {
+    const bytes = await buildDataRequestPdfBytes({ datasetRows: [], signingMethod: null, signatureDataUrl: null });
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'Water_Resources_Data_Requisition_Form_BLANK.pdf'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) { console.error(safeErr(e)); alert('Could not create the blank form: ' + e.message); }
+  btn.disabled = false; btn.textContent = old;
+}
 function drDownloadPdf() {
   if (!window._drPdfBlob) return;
   const url = URL.createObjectURL(window._drPdfBlob);
@@ -9454,7 +9472,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     rows: (BASELINE_ROWS || []).map(r => ({ prg: r[0], sprg: r[1], act: r[2], sact: r[3], fic: r[4], sactT: r[5], obc: r[6], obcT: r[7], b: r[8], e: r[9] })) };
 
   const sb = () => supabaseClient;
-  const PG = { snaps: [], cache: {}, selId: null, updates: [], local: false, division: null, uid: null, acts: [], f: { division: '', project: '', status: '' }, charts: {}, tab: 'overview', loaded: false, pending: null, sheetErr: null };
+  const PG = { assign: [], assignLocal: false, snaps: [], cache: {}, selId: null, updates: [], local: false, division: null, uid: null, acts: [], f: { division: '', project: '', status: '' }, charts: {}, tab: 'overview', loaded: false, pending: null, sheetErr: null };
   const $ = id => document.getElementById(id);
   const r3 = v => Math.round(v * 1000) / 1000;
   const fm = (v, d = 3) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -9557,20 +9575,28 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
       PG.local = true; try { PG.updates = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (x) { PG.updates = []; }
     }
   }
-  async function loadAll() { await Promise.all([loadSnaps(), loadUpdates()]); PG.loaded = true; renderAll(); }
+  async function loadAssign() {
+    try { const { data, error } = await sb().from('activity_divisions').select('*').order('created_at', { ascending: false }).limit(2000); if (error) throw error; PG.assign = data || []; PG.assignLocal = false; }
+    catch (e) { PG.assignLocal = true; try { PG.assign = JSON.parse(localStorage.getItem('pg_assign_v1') || '[]'); } catch (x) { PG.assign = []; } }
+  }
+  async function loadAll() { await Promise.all([loadSnaps(), loadUpdates(), loadAssign()]); PG.loaded = true; renderAll(); }
 
   /* ---------- build + filter ---------- */
   const snapById = id => PG.snaps.find(s => s.id === id);
   function latestMap() { const m = {}; PG.updates.forEach(u => { const c = m[u.activity_key]; if (!c || new Date(u.created_at) > new Date(c.created_at)) m[u.activity_key] = u; }); return m; }
   function buildActs(snap) {
-    const lm = latestMap(), map = {};
+    const lm = latestMap(), map = {}, am = {}, first = {};
+    PG.assign.forEach(x => { const c = am[x.activity_key]; if (!c || new Date(x.created_at) > new Date(c.created_at)) am[x.activity_key] = x; });
+    PG.snaps.forEach(sn => sn.rows.forEach(r => { const k = `${r.sprg}-${r.act}-${r.sact}`; if (!first[k] || sn.uploadedAt < first[k]) first[k] = sn.uploadedAt; }));
     snap.rows.forEach(r => {
       const k = `${r.sprg}-${r.act}-${r.sact}`;
       let a = map[k];
-      if (!a) { const adm = r.prg === '213'; a = map[k] = { key: k, name: title(r.sactT), fic: r.fic, project: PROJECTS[r.fic] || r.fic, division: adm ? 'UNSPECIFIED' : (FIC_DIV[r.fic] || 'UNSPECIFIED'), noProgress: adm, budget: 0, exp: 0, obc: [] }; }
+      if (!a) { const adm = r.prg === '213'; a = map[k] = { key: k, name: title(r.sactT), fic: r.fic, project: PROJECTS[r.fic] || r.fic, division: adm ? 'UNSPECIFIED' : (FIC_DIV[r.fic] || 'UNSPECIFIED'), noProgress: adm, suggested: adm ? 'UNSPECIFIED' : (FIC_DIV[r.fic] || 'UNSPECIFIED'), budget: 0, exp: 0, obc: [] }; }
       a.budget = r3(a.budget + r.b); a.exp = r3(a.exp + r.e); a.obc.push(r);
     });
     return Object.values(map).map(a => {
+      const asg = am[a.key]; a.firstSeen = first[a.key] || snap.uploadedAt;
+      if (asg) { a.division = asg.division; a.divSrc = 'admin'; a.divBy = asg.assigned_by; a.divAt = asg.created_at; } else { a.divSrc = within24(a.firstSeen) ? 'review' : 'auto'; }
       const u = lm[a.key]; a.status = a.noProgress ? '—' : (u ? u.status : 'Not Started'); a.pct = a.noProgress ? null : (u ? Number(u.pct_physical) : 0);
       a.updatedAt = u ? u.created_at : null; a.updatedBy = u ? u.updated_by : null; a.remarks = u ? (u.remarks || '') : ''; return a;
     });
@@ -9598,7 +9624,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   function renderAll() {
     const snap = snapById(PG.selId); if (!snap) return;
     PG.allActs = buildActs(snap); PG.acts = PG.allActs.filter(pass);
-    renderFilters(); renderNote(); renderKpis(); renderInsights(); renderCharts(); renderActTable(); renderObc(); renderSnapList(); renderUpdate(); renderLog();
+    renderFilters(); renderNote(); renderKpis(); renderInsights(); renderCharts(); renderActTable(); renderObc(); renderSnapList(); renderDivs(); renderUpdate(); renderLog();
     $('pgBadge').textContent = (PG.f.division ? DIV_LABEL[PG.f.division] : 'ALL DIVISIONS') + (PG.f.project ? ' · ' + PG.f.project : '');
     document.querySelectorAll('#sec-progress .admin-only-btn').forEach(b => b.style.display = isAdmin() ? 'inline-flex' : 'none');
   }
@@ -9646,6 +9672,8 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     if (ahead.length) L.push(['bad', `${ahead.length} activit${ahead.length > 1 ? 'ies have' : 'y has'} expenditure but <b>0% reported physical progress</b>: ${ahead.slice(0, 3).map(a => esc(a.name.slice(0, 40))).join('; ')}${ahead.length > 3 ? '…' : ''} — progress may need updating.`]);
     const low = PG.acts.filter(a => !a.noProgress && a.pct > 0 && a.budget > 0 && a.pct - a.exp / a.budget * 100 > 25);
     if (low.length) L.push(['warn', `${low.length} activit${low.length > 1 ? 'ies show' : 'y shows'} physical progress well ahead of expenditure (bills/claims may be pending).`]);
+    const unas = PG.acts.filter(a => a.divSrc !== 'admin' && !a.noProgress), rev = unas.filter(a => a.divSrc === 'review');
+    if (unas.length) L.push(['warn', `${unas.length} activit${unas.length > 1 ? 'ies are' : 'y is'} placed in a division <b>automatically by financing code</b> (not assigned by the Admin) — Nu. ${fm(unas.reduce((x, a) => x + a.budget, 0), 2)} M of budget. ${rev.length ? `<b>${rev.length} new</b> in the latest upload await the Admin’s review and are auto-assigned after 24 hours. ` : ''}See the <b>Division Assignment</b> tab.`]);
     const neg = PG.acts.filter(a => a.exp < 0); if (neg.length) L.push(['warn', `Negative expenditure (adjustment / reversal) recorded for: ${neg.map(a => esc(a.name.slice(0, 45))).join('; ')}.`]);
     const stale = PG.acts.filter(a => !a.noProgress && (!a.updatedAt || (Date.now() - new Date(a.updatedAt)) > 14 * 864e5));
     if (stale.length) L.push(['warn', `${stale.length} of ${PG.acts.filter(a => !a.noProgress).length} activities have <b>no physical-progress update in the last 14 days</b>.`]);
@@ -9694,7 +9722,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     const rows = [...PG.acts].sort((a, b) => a.division.localeCompare(b.division) || b.budget - a.budget), t = total(PG.acts);
     $('pgActCount').textContent = `(${rows.length})`;
     $('pgActTable').innerHTML = `<table class="pg-t"><thead><tr><th>Division</th><th>Project (FIC)</th><th>Activity</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th>Utilisation</th><th>Status</th><th class="num">Physical %</th><th>Last update</th></tr></thead><tbody>` +
-      (rows.map(a => { const u = a.budget > 0 ? a.exp / a.budget * 100 : 0; return `<tr><td>${DIV_LABEL[a.division]}</td><td>${a.fic}</td><td>${esc(a.name)}</td><td class="num">${fm(a.budget)}</td><td class="num">${fm(a.exp)}</td><td class="num">${fm(a.budget - a.exp)}</td><td><div class="pg-bar"><div style="width:${Math.max(0, Math.min(100, u))}%"></div></div><small>${fm(u, 1)}%</small></td><td>${a.noProgress ? '—' : tag(a.status)}</td><td class="num">${a.pct == null ? '—' : fm(a.pct, 0)}</td><td>${a.updatedAt ? fDT(a.updatedAt) + '<br><small>' + esc(a.updatedBy) + '</small>' : '—'}</td></tr>`; }).join('') || '<tr><td colspan="10">No activities match the filters.</td></tr>') +
+      (rows.map(a => { const u = a.budget > 0 ? a.exp / a.budget * 100 : 0; return `<tr><td>${DIV_LABEL[a.division]}${a.divSrc !== 'admin' ? '<sup title="Division not assigned by the Admin (set by financing code)"> *</sup>' : ''}</td><td>${a.fic}</td><td>${esc(a.name)}</td><td class="num">${fm(a.budget)}</td><td class="num">${fm(a.exp)}</td><td class="num">${fm(a.budget - a.exp)}</td><td><div class="pg-bar"><div style="width:${Math.max(0, Math.min(100, u))}%"></div></div><small>${fm(u, 1)}%</small></td><td>${a.noProgress ? '—' : tag(a.status)}</td><td class="num">${a.pct == null ? '—' : fm(a.pct, 0)}</td><td>${a.updatedAt ? fDT(a.updatedAt) + '<br><small>' + esc(a.updatedBy) + '</small>' : '—'}</td></tr>`; }).join('') || '<tr><td colspan="10">No activities match the filters.</td></tr>') +
       `<tr class="tot"><td colspan="3">TOTAL</td><td class="num">${fm(t.budget)}</td><td class="num">${fm(t.exp)}</td><td class="num">${fm(t.balance)}</td><td>${fm(t.util, 1)}%</td><td></td><td class="num">${t.phys == null ? '—' : fm(t.phys, 1)}</td><td></td></tr></tbody></table>`;
   }
   function renderObc() {
@@ -9707,8 +9735,28 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     $('pgSnapList').innerHTML = `<table class="pg-t" style="min-width:700px"><thead><tr><th>Report date</th><th>Stored (upload time, BST)</th><th>Uploaded by</th><th>File</th><th class="num">Budget</th><th class="num">Expenditure</th><th>Status</th><th>Manage</th></tr></thead><tbody>` +
       [...PG.snaps].reverse().map(x => { const b = r3(x.rows.reduce((t, r) => t + r.b, 0)), e = r3(x.rows.reduce((t, r) => t + r.e, 0));
         const pend = isPendS(x), st = x.id === 'baseline' ? 'Built-in' : (pend ? `<span class="pg-tag s-Delayed">⏳ Pending — auto-confirms ${autoAt(x.uploadedAt)}</span>` : '<span class="pg-tag s-Completed">✔ Confirmed</span>');
-        const mg = x.id === 'baseline' ? '' : (isAdmin() ? (pend ? bt('pgConfSnap', x.id, '✔ Confirm') + bt('pgDelSnap', x.id, 'Remove &amp; re-upload') : '') : '');
-        return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or remove it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. All times are Bhutan Standard Time (BST).</div>';
+        const mg = x.id === 'baseline' ? '' : (isAdmin() ? (pend ? bt('pgConfSnap', x.id, '✔ Confirm') : '') + bt('pgDelSnap', x.id, '🗑 Delete') : '');
+        return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or delete it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. The Admin can <b>delete any uploaded report at any time</b> (the built-in starting report cannot be deleted). All times are Bhutan Standard Time (BST).</div>';
+  }
+  function renderDivs() {
+    const box = $('pgDivBox'), ad = isAdmin(), rows = [...PG.allActs].sort((a, b) => ({ review: 0, auto: 1, admin: 2 }[a.divSrc] - { review: 0, auto: 1, admin: 2 }[b.divSrc]) || a.fic.localeCompare(b.fic));
+    const opt = (v, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${DIV_LABEL[v]}</option>`;
+    const stt = a => a.divSrc === 'admin' ? `<span class="pg-tag s-Completed">✔ Admin-assigned</span><br><small>${esc(a.divBy)} · ${fDT(a.divAt)}</small>` : a.divSrc === 'review' ? `<span class="pg-tag s-Delayed">⏳ Awaiting Admin — auto-assigns ${autoAt(a.firstSeen)}</span>` : '<span class="pg-tag">Auto-assigned (financing code)</span>';
+    const g = group(PG.allActs, a => a.division);
+    box.innerHTML = '<div class="chart-title">Division Assignment <span>ADMIN DECIDES · AUTO-ASSIGNED AFTER 24 HOURS</span></div>' +
+      `<p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Each activity belongs to one division, and that division’s focal person updates its progress. The Admin assigns the division here. A newly uploaded activity the Admin has not assigned is placed by its financing code, and is confirmed automatically after one day. ${ad ? '' : '<b>Only the Admin can change assignments.</b>'}${PG.assignLocal ? ' <b>⚠ activity_divisions table not found — assignments are saved in this browser only (run supabase_setup.sql).</b>' : ''}</p>` +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' + Object.keys(g).map(k => `<span class="pg-chip" style="padding:6px 12px;border-radius:999px;background:var(--bg-card2);border:1px solid var(--border);font-size:12px;"><b style="color:${DIV_COLOR[k]}">${DIV_LABEL[k]}</b> · ${g[k].n} activities · Nu. ${fm(g[k].budget, 2)} M</span>`).join('') + '</div>' +
+      `<div class="pg-twrap"><table class="pg-t"><thead><tr><th>FIC</th><th>Activity</th><th class="num">Budget</th><th>Suggested (by FIC)</th><th>Division</th><th>Status</th><th></th></tr></thead><tbody>` +
+      rows.map(a => `<tr data-k="${esc(a.key)}"><td>${a.fic}</td><td>${esc(a.name)}</td><td class="num">${fm(a.budget)}</td><td>${DIV_LABEL[a.suggested]}</td><td><select class="pg-dv" ${ad ? '' : 'disabled'}>${['WRMD', 'WRPMD', 'WSD', 'UNSPECIFIED'].map(v => opt(v, a.division)).join('')}</select></td><td>${stt(a)}</td><td>${ad ? `<button class="pg-btn" onclick="pgSaveDiv('${esc(a.key)}',this)">${a.divSrc === 'admin' ? 'Update' : 'Assign'}</button>` : ''}</td></tr>`).join('') + '</tbody></table></div>';
+  }
+  async function saveDiv(key, btn) {
+    if (!isAdmin()) { toast('Only the Admin can assign divisions.'); return; }
+    const a = PG.allActs.find(x => x.key === key); if (!a) return; const v = btn.closest('tr').querySelector('.pg-dv').value;
+    const rec = { activity_key: key, activity_name: a.name, division: v, assigned_by: String(CURRENT_NAME).replace(/_/g, ' '), assigned_by_id: PG.uid };
+    btn.disabled = true; const { data, error } = await sb().from('activity_divisions').insert(rec).select().single();
+    if (error) { PG.assignLocal = true; PG.assign.unshift({ ...rec, id: 'l' + Date.now(), created_at: new Date().toISOString() }); try { localStorage.setItem('pg_assign_v1', JSON.stringify(PG.assign.slice(0, 500))); } catch (e) {} toast('Saved in this browser only — activity_divisions table is not set up (' + error.message + ').', 7000); }
+    else { PG.assign.unshift(data); toast(`${a.name.slice(0, 40)} → ${DIV_LABEL[v]} ✓`); }
+    renderAll();
   }
   /* ---------- update progress (division editors) ---------- */
   function renderUpdate() {
@@ -9757,7 +9805,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
   function renderLog() {
     const m = Object.fromEntries(PG.allActs.map(a => [a.key, a]));
-    const L = PG.updates.filter(u => (!PG.f.division || u.division === PG.f.division) && (!PG.f.project || String(u.project_fic) === PG.f.project) && (!PG.f.status || u.status === PG.f.status)).slice(0, 150);
+    const L = PG.updates.filter(u => (!PG.f.division || ((m[u.activity_key] || {}).division || u.division) === PG.f.division) && (!PG.f.project || String(u.project_fic) === PG.f.project) && (!PG.f.status || u.status === PG.f.status)).slice(0, 150);
     $('pgLogBox').innerHTML = '<div class="chart-title">Update Log <span>NEWEST FIRST · CURRENT FILTERS</span></div>' + (L.length ? '<ul class="pg-log">' + L.map(u => `<li><small>${fDT(u.created_at)} · ${esc(u.updated_by)} · ${esc(DIV_LABEL[u.division] || u.division)}</small><br><b>${esc(u.activity_name || (m[u.activity_key] || {}).name || u.activity_key)}</b> → ${tag(u.status)} <b>${fm(u.pct_physical, 0)}%</b>${u.remarks ? ' — ' + esc(u.remarks) : ''}${logActions(u)}</li>`).join('') + '</ul>' : '<p style="color:var(--text-dim)">No progress updates have been recorded for these filters yet.</p>');
   }
 
@@ -9797,14 +9845,14 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
 
   async function delSnap(id) {
-    const s = snapById(id); if (!isAdmin() || !s || !isPendS(s)) { toast('Only the Admin can remove a report, and only while it is pending (24 hours, not yet confirmed).'); return; }
-    if (!confirm(`Remove the expenditure report dated ${fDate(s.reportDate)} (uploaded ${fDT(s.uploadedAt)})? You can then upload the corrected file.`)) return;
+    const s = snapById(id); if (!isAdmin() || !s || id === 'baseline') { toast('Only the Admin can delete an uploaded expenditure report.'); return; }
+    if (!confirm(`Delete the expenditure report dated ${fDate(s.reportDate)} (uploaded ${fDT(s.uploadedAt)}) permanently? The dashboard will update; you can upload a corrected file afterwards.`)) return;
     try {
       const { data: files, error: e0 } = await sb().storage.from(BUCKET).list(`${PREFIX}/${id}`); if (e0) throw e0;
       const paths = (files || []).map(f => `${PREFIX}/${id}/${f.name}`);
       const { data: gone, error } = await sb().storage.from(BUCKET).remove(paths); if (error) throw error;
       if (!gone || gone.length < paths.length) throw new Error('storage did not allow the delete (24-hour limit or permission)');
-      delete PG.cache[id]; PG.selLatest = true; toast('Report removed — you can upload the corrected file now.'); await loadAll();
+      delete PG.cache[id]; PG.selLatest = true; toast('Report deleted — dashboard updated. You can upload a corrected file.'); await loadAll();
     } catch (e) { toast('Could not remove: ' + (e.message || e), 7000); }
   }
   async function confSnap(id) {
@@ -9833,7 +9881,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   function exportAll() {
     const s = snapById(PG.selId), t = total(PG.acts), wb = XLSX.utils.book_new(), add = (n, a) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), n);
     add('Filters & Summary', [['WRI Dashboard — Progress Dashboard export'], ['Exported', stamp()], [], ['FILTERS USED'], ...filterList().map(f => [f[0], f[1]]), [], ['SUMMARY (Nu. million)'], ['Activities', PG.acts.length], ['Budget', t.budget], ['Expenditure', t.exp], ['Balance', t.balance], ['Utilisation %', +t.util.toFixed(2)], ['Physical progress % (budget-weighted)', t.phys == null ? '' : +t.phys.toFixed(2)], ['FY elapsed % at report date', +fyElapsed(s.reportDate).toFixed(1)]]);
-    add('Activities', [['Division', 'FIC', 'Project', 'Activity', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Status', 'Physical %', 'Last updated', 'Updated by', 'Remarks'], ...PG.acts.map(a => [DIV_LABEL[a.division], a.fic, a.project, a.name, a.budget, a.exp, r3(a.budget - a.exp), a.budget > 0 ? +(a.exp / a.budget * 100).toFixed(2) : '', a.noProgress ? '' : a.status, a.pct == null ? '' : a.pct, a.updatedAt ? fDT(a.updatedAt) : '', a.updatedBy || '', a.remarks])]);
+    add('Activities', [['Division', 'FIC', 'Project', 'Activity', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Status', 'Physical %', 'Last updated', 'Updated by', 'Remarks', 'Division source'], ...PG.acts.map(a => [DIV_LABEL[a.division], a.fic, a.project, a.name, a.budget, a.exp, r3(a.budget - a.exp), a.budget > 0 ? +(a.exp / a.budget * 100).toFixed(2) : '', a.noProgress ? '' : a.status, a.pct == null ? '' : a.pct, a.updatedAt ? fDT(a.updatedAt) : '', a.updatedBy || '', a.remarks, a.divSrc === 'admin' ? 'Admin-assigned' : 'Auto (financing code)'])]);
     const gTab = (name, g, lab) => add(name, [[name.split(' ')[0], 'Activities', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Physical %'], ...Object.values(g).map(o => [lab(o.key), o.n, r3(o.budget), r3(o.exp), o.balance, +o.util.toFixed(2), o.phys == null ? '' : +o.phys.toFixed(2)])]);
     gTab('By Division', group(PG.acts, a => a.division), k => DIV_LABEL[k]); gTab('By Project', group(PG.acts, a => a.fic), k => `${k} ${PROJECTS[k] || ''}`);
     const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = [r.obc, r.obcT, 0, 0]); o[2] = r3(o[2] + r.b); o[3] = r3(o[3] + r.e); }));
@@ -9874,7 +9922,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   async function onAuth() { await resolveRole(); if (applyAccess() && PG.loaded) renderAll(); }
   new MutationObserver(() => { if (activeSection() && PG.loaded) renderCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   applyAccess();
-  Object.assign(window, { pgOnFilter: onFilter, pgReset: reset, pgRefresh: () => refresh(false), pgTab: tab, pgExportAll: exportAll, pgExportPNG: exportPNG, pgExportChartXL: exportChartXL, pgSaveRow: saveRow, pgDelUpdate: delUpdate, pgConfUpdate: confUpdate, pgConfSnap: confSnap, pgDelSnap: delSnap,
+  Object.assign(window, { pgOnFilter: onFilter, pgReset: reset, pgRefresh: () => refresh(false), pgTab: tab, pgExportAll: exportAll, pgExportPNG: exportPNG, pgExportChartXL: exportChartXL, pgSaveRow: saveRow, pgSaveDiv: saveDiv, pgDelUpdate: delUpdate, pgConfUpdate: confUpdate, pgConfSnap: confSnap, pgDelSnap: delSnap,
     pgOpenUpload: openUpload, pgCloseUpload: closeUpload, pgOnFile: onFile, pgSaveUpload: saveUpload, progOnShow: onShow, pgOnAuth: onAuth, pgLeave: () => document.body.classList.remove('prog-mode') });
 })();
 </script>
