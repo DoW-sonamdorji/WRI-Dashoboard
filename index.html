@@ -9507,7 +9507,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   const DAY = 864e5, within24 = t => (Date.now() - new Date(t)) < DAY;
   const autoAt = t => fDT(new Date(new Date(t).getTime() + DAY));
   const isPendU = u => !u.confirmed_at && within24(u.created_at);
-  const isPendS = x => x.id !== 'baseline' && !x.confirmed && within24(x.uploadedAt);
+  const isPendS = x => x.id !== 'baseline' && x.id !== 'empty' && !x.confirmed && within24(x.uploadedAt);
     const ASK = 'Are you confident this is correct?\n\nOK = Confirm now (final, cannot be removed)\nCancel = keep it pending for one day — you can still remove & redo it, and it is confirmed automatically after 24 hours.';
 
   /* ---------- parse the Expenditure Report workbook ---------- */
@@ -9549,6 +9549,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     try {
       const { data, error } = await sb().storage.from(BUCKET).list(PREFIX, { limit: 500, sortBy: { column: 'name', order: 'asc' } });
       if (error) throw error;
+      PG.baseHidden = (data || []).some(x => x.name === 'baseline_deleted.json');
       const folders = (data || []).filter(x => !x.id).map(x => x.name);
       await Promise.all(folders.map(async f => {
         if (!PG.cache[f]) {
@@ -9563,6 +9564,8 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
       }));
       await Promise.all(snaps.filter(x => x.id !== 'baseline' && within24(x.uploadedAt)).map(async x => { try { const { data: fl } = await sb().storage.from(BUCKET).list(`${PREFIX}/${x.id}`); x.confirmed = (fl || []).some(f => f.name === 'confirmed.json'); } catch (e) {} }));
     } catch (e) { PG.sheetErr = e.message || String(e); }
+    if (PG.baseHidden) snaps.splice(snaps.indexOf(BASELINE), 1);
+    if (!snaps.length) snaps.push({ id: 'empty', reportDate: new Date().toLocaleDateString('en-CA', tz), uploadedAt: new Date().toISOString(), uploadedBy: '—', fileName: 'No report uploaded', rows: [] });
     snaps.sort((a, b) => (a.reportDate + a.uploadedAt).localeCompare(b.reportDate + b.uploadedAt));
     PG.snaps = snaps;
     if (!PG.selId || !snaps.find(s => s.id === PG.selId) || PG.selLatest) { PG.selId = snaps[snaps.length - 1].id; PG.selLatest = true; }
@@ -9640,7 +9643,8 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     $('pgChips').innerHTML = '<b>FILTERS USED</b>' + filterList().map(x => `<span class="pg-chip"><i>${esc(x[0])}:</i>${esc(x[1])}</span>`).join('');
   }
   function renderNote() {
-    const s = snapById(PG.selId), el = $('pgNote'); let m = `Showing the expenditure report dated <b>${fDate(s.reportDate)}</b> (stored ${fDT(s.uploadedAt)}, ${esc(s.uploadedBy)}) — Nu. in millions, FY 2026-27. `;
+    const s = snapById(PG.selId), el = $('pgNote');
+    if (s.id === 'empty') { el.className = 'pg-note warn'; el.innerHTML = 'No expenditure report is stored yet. ' + (isAdmin() ? 'Use <b>📊 Upload Expenditure</b> to add the weekly report.' : 'The Admin will upload the weekly report.'); return; } let m = `Showing the expenditure report dated <b>${fDate(s.reportDate)}</b> (stored ${fDT(s.uploadedAt)}, ${esc(s.uploadedBy)}) — Nu. in millions, FY 2026-27. `;
     m += CURRENT_PERMISSION ? (PG.division ? `You can update physical progress for <b>${DIV_LABEL[PG.division]}</b> activities.` : (isAdmin() ? 'You can upload the weekly expenditure report.' : 'Your account has view access; physical progress is updated by the division focal persons.')) : 'Sign in as a division focal person / Admin to update progress.';
     const warn = PG.local ? ' <b>⚠ Progress table not found in Supabase — updates are saved in this browser only. Run supabase_setup.sql to share them live.</b>' : (PG.sheetErr ? ` <b>⚠ Could not list stored reports (${esc(PG.sheetErr)}); showing the built-in report.</b>` : '');
     el.innerHTML = m + warn; el.className = 'pg-note' + (warn ? ' warn' : '');
@@ -9735,8 +9739,8 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     $('pgSnapList').innerHTML = `<table class="pg-t" style="min-width:700px"><thead><tr><th>Report date</th><th>Stored (upload time, BST)</th><th>Uploaded by</th><th>File</th><th class="num">Budget</th><th class="num">Expenditure</th><th>Status</th><th>Manage</th></tr></thead><tbody>` +
       [...PG.snaps].reverse().map(x => { const b = r3(x.rows.reduce((t, r) => t + r.b, 0)), e = r3(x.rows.reduce((t, r) => t + r.e, 0));
         const pend = isPendS(x), st = x.id === 'baseline' ? 'Built-in' : (pend ? `<span class="pg-tag s-Delayed">⏳ Pending — auto-confirms ${autoAt(x.uploadedAt)}</span>` : '<span class="pg-tag s-Completed">✔ Confirmed</span>');
-        const mg = x.id === 'baseline' ? '' : (isAdmin() ? (pend ? bt('pgConfSnap', x.id, '✔ Confirm') : '') + bt('pgDelSnap', x.id, '🗑 Delete') : '');
-        return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or delete it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. The Admin can <b>delete any uploaded report at any time</b> (the built-in starting report cannot be deleted). All times are Bhutan Standard Time (BST).</div>';
+        const mg = x.id === 'empty' ? '' : (isAdmin() ? (pend ? bt('pgConfSnap', x.id, '✔ Confirm') : '') + bt('pgDelSnap', x.id, '🗑 Delete') : '');
+        return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or delete it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. The Admin can <b>delete any uploaded report at any time</b> (including the built-in starting report). All times are Bhutan Standard Time (BST).</div>';
   }
   function renderDivs() {
     const box = $('pgDivBox'), ad = isAdmin(), rows = [...PG.allActs].sort((a, b) => ({ review: 0, auto: 1, admin: 2 }[a.divSrc] - { review: 0, auto: 1, admin: 2 }[b.divSrc]) || a.fic.localeCompare(b.fic));
@@ -9845,15 +9849,19 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
 
   async function delSnap(id) {
-    const s = snapById(id); if (!isAdmin() || !s || id === 'baseline') { toast('Only the Admin can delete an uploaded expenditure report.'); return; }
+    const s = snapById(id); if (!isAdmin() || !s || id === 'empty') { toast('Only the Admin can delete an expenditure report.'); return; }
     if (!confirm(`Delete the expenditure report dated ${fDate(s.reportDate)} (uploaded ${fDT(s.uploadedAt)}) permanently? The dashboard will update; you can upload a corrected file afterwards.`)) return;
     try {
+      if (id === 'baseline') {
+        const { error: eb } = await sb().storage.from(BUCKET).upload(`${PREFIX}/baseline_deleted.json`, new Blob(['{}'], { type: 'application/json' }), { upsert: true, contentType: 'application/json' }); if (eb) throw eb;
+        PG.selLatest = true; toast('Starting report deleted — dashboard updated.'); await loadAll(); return;
+      }
       const { data: files, error: e0 } = await sb().storage.from(BUCKET).list(`${PREFIX}/${id}`); if (e0) throw e0;
       const paths = (files || []).map(f => `${PREFIX}/${id}/${f.name}`);
       const { data: gone, error } = await sb().storage.from(BUCKET).remove(paths); if (error) throw error;
-      if (!gone || gone.length < paths.length) throw new Error('storage did not allow the delete (24-hour limit or permission)');
+      if (!gone || gone.length < paths.length) throw new Error('storage refused the delete — run the final supabase_setup.sql (section 3 delete policy) and make sure you are signed in as the Admin');
       delete PG.cache[id]; PG.selLatest = true; toast('Report deleted — dashboard updated. You can upload a corrected file.'); await loadAll();
-    } catch (e) { toast('Could not remove: ' + (e.message || e), 7000); }
+    } catch (e) { toast('Could not delete: ' + (e.message || e), 9000); }
   }
   async function confSnap(id) {
     const x = snapById(id); if (!isAdmin() || !x) return;
