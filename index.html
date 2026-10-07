@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem("wriTheme");if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
+<script>(function(){try{var t=localStorage.getItem("wriTheme");if(!t)t="light";document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>WRI Dashboard — Water Resource Management Division · Bhutan</title>
@@ -788,6 +788,53 @@ body {
   #mobileNav button { padding: 0 12px; font-size: 12px; }
 }
 </style>
+<style>
+/* ===== PROGRESS DASHBOARD (added section) ===== */
+body.prog-mode #sidebar .filter-group, body.prog-mode #sidebar .divider, body.prog-mode #sidebar .reset-btn, body.prog-mode #sidebar .pg-hide, body.prog-mode #datasetCoverageNote { display:none !important; }
+#sec-progress .pg-note { font-size:12.5px; line-height:1.6; padding:10px 14px; border-radius:8px; margin-bottom:14px; background:rgba(10,122,219,.07); border:1px solid var(--border); border-left:4px solid var(--accent-blue); color:var(--text-secondary); }
+#sec-progress .pg-note.warn { background:rgba(224,120,0,.09); border-left-color:var(--accent-orange); }
+#sec-progress .pg-filterbar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; padding:14px 16px; margin-bottom:10px; }
+#sec-progress .pg-fgroup { display:flex; flex-direction:column; gap:4px; min-width:160px; flex:1 1 170px; }
+#sec-progress .pg-fgroup label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); font-weight:700; }
+#sec-progress select, #sec-progress .pg-in, #pgUploadModal input[type=date], #pgUploadModal input[type=file] { width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-panel); color:var(--text-primary); font-family:var(--font-body); font-size:12.5px; }
+#sec-progress .pg-btn, #pgUploadModal .pg-btn { padding:8px 14px; border-radius:8px; border:1px solid var(--accent-blue); background:var(--accent-blue); color:#fff; font-weight:700; font-size:12px; cursor:pointer; font-family:var(--font-body); white-space:nowrap; }
+#sec-progress .pg-btn.ghost, #pgUploadModal .pg-btn.ghost { background:transparent; color:var(--accent-blue); }
+#sec-progress .pg-btn.green { background:var(--accent-green); border-color:var(--accent-green); }
+#sec-progress .pg-btn:disabled { opacity:.5; cursor:not-allowed; }
+#sec-progress .pg-chips { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 16px; font-size:12px; }
+#sec-progress .pg-chips b { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--text-dim); }
+#sec-progress .pg-chip { padding:4px 10px; border-radius:999px; background:var(--bg-card2); border:1px solid var(--border); color:var(--text-primary); }
+#sec-progress .pg-chip i { font-style:normal; color:var(--text-dim); margin-right:4px; }
+#sec-progress .pg-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; border-bottom:1.5px solid var(--border); }
+#sec-progress .pg-tab { padding:9px 16px; border:none; background:none; cursor:pointer; font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.5px; color:var(--text-secondary); border-bottom:3px solid transparent; margin-bottom:-1.5px; }
+#sec-progress .pg-tab.active { color:var(--accent-blue); border-bottom-color:var(--accent-blue); }
+#sec-progress .pg-panel { display:none; } #sec-progress .pg-panel.active { display:block; }
+#sec-progress .pg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:16px; margin-bottom:18px; }
+@media (max-width:640px){ #sec-progress .pg-grid { grid-template-columns:1fr; } }
+#sec-progress .pg-ch { height:290px; position:relative; }
+#sec-progress .pg-chead { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+#sec-progress .pg-chead .chart-title { margin-bottom:0; }
+#sec-progress .pg-insights ul { margin:8px 0 0 18px; line-height:1.75; font-size:13px; color:var(--text-primary); }
+#sec-progress .pg-insights li.bad::marker { color:var(--accent-red); } #sec-progress .pg-insights li.good::marker { color:var(--accent-green); } #sec-progress .pg-insights li.warn::marker { color:var(--accent-orange); }
+#sec-progress .pg-twrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+#sec-progress table.pg-t { width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
+#sec-progress .pg-t th { position:sticky; top:0; background:var(--bg-card2); text-align:left; padding:9px 10px; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); border-bottom:1.5px solid var(--border); white-space:nowrap; }
+#sec-progress .pg-t td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; color:var(--text-primary); }
+#sec-progress .pg-t td.num, #sec-progress .pg-t th.num { text-align:right; font-family:var(--font-mono); }
+#sec-progress .pg-t tr.tot td { font-weight:800; background:var(--bg-card2); }
+#sec-progress .pg-bar { height:7px; border-radius:4px; background:var(--bg-card2); min-width:70px; overflow:hidden; border:1px solid var(--border); }
+#sec-progress .pg-bar > div { height:100%; background:var(--accent-blue); }
+#sec-progress .pg-tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10.5px; font-weight:700; border:1px solid var(--border); background:var(--bg-card2); }
+#sec-progress .pg-tag.s-Completed { color:var(--accent-green); border-color:var(--accent-green); } #sec-progress .pg-tag.s-InProgress { color:var(--accent-blue); border-color:var(--accent-blue); } #sec-progress .pg-tag.s-Delayed { color:var(--accent-red); border-color:var(--accent-red); }
+#sec-progress .pg-sm { width:90px !important; padding:5px 7px !important; } #sec-progress .pg-rem { min-width:190px; }
+#sec-progress .pg-log { list-style:none; margin:0; padding:0; } #sec-progress .pg-log li { padding:10px 12px; border-left:3px solid var(--accent-blue); background:var(--bg-card); margin-bottom:8px; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.55; }
+#sec-progress .pg-log small { color:var(--text-dim); font-family:var(--font-mono); font-size:10px; }
+#pgToast { position:fixed; right:18px; bottom:18px; z-index:2000; background:#0a1f3a; color:#fff; padding:11px 16px; border-radius:10px; font-size:13px; max-width:360px; display:none; box-shadow:0 6px 24px rgba(0,0,0,.3); }
+#pgUploadModal { display:none; position:fixed; inset:0; background:rgba(10,20,40,.55); z-index:999; align-items:center; justify-content:center; }
+#pgUploadModal .pg-box { background:var(--bg-panel); color:var(--text-primary); border-radius:14px; max-width:520px; width:92%; padding:24px; max-height:90vh; overflow:auto; }
+#pgUploadModal label { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); margin:12px 0 4px; font-weight:700; }
+#pgUploadModal .pg-prev { margin-top:12px; font-size:12.5px; line-height:1.6; padding:10px 12px; border-radius:8px; background:var(--bg-card2); border:1px solid var(--border); min-height:40px; }
+</style>
 </head>
 <body>
 <script id="mobile-menu-core">
@@ -1349,8 +1396,8 @@ body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;text-render
 .ms-item{border-radius:8px;transition:background .15s}
 
 /* login — aurora + glass card */
-#loginScreen{background:#071a36;overflow:hidden}
-#loginScreen::after{content:"";position:absolute;inset:-25%;pointer-events:none;background:radial-gradient(40% 40% at 20% 30%,rgba(0,160,255,.35),transparent 70%),radial-gradient(35% 35% at 80% 20%,rgba(124,92,255,.28),transparent 70%),radial-gradient(45% 45% at 60% 90%,rgba(0,212,190,.26),transparent 70%);filter:blur(30px);animation:aurora 18s ease-in-out infinite alternate}
+#loginScreen{overflow:hidden}
+#loginScreen::after{display:none}
 @keyframes aurora{to{transform:translate(4%,-3%) rotate(8deg) scale(1.12)}}
 .login-box{position:relative;z-index:1;border-radius:26px!important;backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);box-shadow:0 30px 80px -20px rgba(0,20,70,.65),inset 0 1px 0 rgba(255,255,255,.7)!important;animation:proFade .8s var(--ease) both}
 .login-box h2{font-family:var(--font-display);font-weight:800;letter-spacing:.5px}
@@ -1390,7 +1437,7 @@ html[data-theme="dark"] :is(.chart-card,.donut-card,.chart-container) canvas{fil
 html[data-theme="dark"] .leaflet-popup-content-wrapper,html[data-theme="dark"] .leaflet-popup-tip{background:#0f2038;color:var(--text-primary)}
 html[data-theme="dark"] .leaflet-bar a{background:#0f2038;color:#e8f1ff;border-color:#24446f}
 html[data-theme="dark"] :is(#mobileMenuBtn,#mobileNav button,.sb-mobile-head button,.mobile-account .ma-btns button){background:#0f2038;color:var(--text-primary);border-color:rgba(120,180,255,.24)}
-html[data-theme="dark"] #loginScreen{background:#040b18}
+
 html[data-theme="dark"] .login-box{background:linear-gradient(150deg,rgba(21,42,76,.82),rgba(10,24,48,.82))!important;border:1px solid rgba(120,180,255,.22)!important;color:var(--text-primary)}
 html[data-theme="dark"] .login-box :is(h2,.subtitle){color:var(--text-primary)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -1411,7 +1458,7 @@ function wriThemeLabel(){
   m.content=d?'#040b18':'#0a7adb';
 }
 wriThemeLabel();
-try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){if(!localStorage.getItem('wriTheme')){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');wriThemeLabel();}});}catch(e){}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){if(false){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');wriThemeLabel();}});}catch(e){}
 /* PRO POLISH — scroll progress bar (display only) */
 (function(){
   var bar=document.createElement('div');bar.id='wriProgress';document.body.appendChild(bar);
@@ -1635,6 +1682,7 @@ async function handleAuthChange(session) {
   // Show/hide the Master Data Table for the new role (visitors: locked; staff/admin: table)
   try { if (typeof renderTable === 'function') renderTable(); } catch (e) { console.error('Could not refresh Master Data Table:', safeErr(e)); }
 
+  if (typeof pgOnAuth === 'function') pgOnAuth();
   // Whenever auth state resolves, (re)load the dataset list so the
   // Dataset selector and admin dataset-management panel stay in sync.
   // (The dataset list function lives in a later <script>; if auth resolved before it was
@@ -1687,6 +1735,9 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
     <button class="upload-btn admin-only-btn" style="display:none;" onclick="openManageDatasetsModal()" title="Manage saved datasets">
       🗂️ Manage Datasets
     </button>
+    <button class="upload-btn admin-only-btn" style="display:none;" onclick="pgOpenUpload()" title="Upload the weekly (Friday) Expenditure Report">
+      📊 Upload Expenditure
+    </button>
     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
   </div>
 </div>
@@ -1718,6 +1769,9 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
       </div>
       <div class="nav-item" onclick="showSection('reports')">
         <span class="nav-icon">📋</span> Reports &amp; Tables
+      </div>
+      <div class="nav-item" id="pgNavItem" style="display:none;" onclick="showSection('progress')">
+        <span class="nav-icon">📈</span> Progress Dashboard
       </div>
       <div class="nav-item" onclick="showSection('datarequest')" style="border-top:1.5px solid var(--border);margin-top:8px;padding-top:14px;">
         <span class="nav-icon">📝</span> Data Request
@@ -2588,6 +2642,49 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
         .frm-other { margin-left:0; width:100%; }
       }
     </style>
+    <!-- ═══════════ SECTION: PROGRESS DASHBOARD (budget expenditure + physical progress) ═══════════ -->
+    <div id="sec-progress" class="section">
+      <div class="section-header">
+        <div class="section-title">📈 <span>Progress Dashboard</span> — Budget Expenditure &amp; Physical Progress</div>
+        <div class="section-badge" id="pgBadge">ALL DIVISIONS</div>
+      </div>
+      <div id="pgNote" class="pg-note">Loading progress data…</div>
+
+      <div class="panel-card pg-filterbar">
+        <div class="pg-fgroup"><label>Division wise</label><select id="pgFDivision" onchange="pgOnFilter()"></select></div>
+        <div class="pg-fgroup" style="flex:2 1 260px;"><label>Project wise</label><select id="pgFProject" onchange="pgOnFilter()"></select></div>
+        <div class="pg-fgroup"><label>Status</label><select id="pgFStatus" onchange="pgOnFilter()"></select></div>
+        <div class="pg-fgroup" style="flex:2 1 240px;"><label>Expenditure report (stored by upload time)</label><select id="pgFSnap" onchange="pgOnFilter()"></select></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="pg-btn ghost" onclick="pgReset()">↺ Reset</button>
+          <button class="pg-btn ghost" onclick="pgRefresh()">⟳ Refresh</button>
+          <button class="pg-btn green" onclick="pgExportAll()">⬇ Export Excel</button>
+          <button class="pg-btn admin-only-btn" id="pgUploadBtnInline" style="display:none;" onclick="pgOpenUpload()">📊 Upload Expenditure</button>
+        </div>
+      </div>
+      <div class="pg-chips" id="pgChips"></div>
+
+      <div class="pg-tabs" id="pgTabs">
+        <button class="pg-tab active" data-t="overview" onclick="pgTab('overview')">Overview</button>
+        <button class="pg-tab" data-t="budget" onclick="pgTab('budget')">Budget &amp; Expenditure</button>
+        <button class="pg-tab" data-t="update" onclick="pgTab('update')">Update Progress</button>
+        <button class="pg-tab" data-t="log" onclick="pgTab('log')">Update Log</button>
+      </div>
+
+      <div class="pg-panel active" id="pgP-overview">
+        <div class="kpi-grid" id="pgKpis"></div>
+        <div class="panel-card pg-insights" id="pgInsights"></div>
+        <div class="pg-grid" id="pgChartGrid"></div>
+      </div>
+      <div class="pg-panel" id="pgP-budget">
+        <div class="panel-card"><div class="chart-title">Activity-wise Budget, Expenditure &amp; Progress <span id="pgActCount"></span></div><div class="pg-twrap" id="pgActTable"></div></div>
+        <div class="panel-card"><div class="chart-title">Expenditure by Object Code</div><div class="pg-twrap" id="pgObcTable"></div></div>
+        <div class="panel-card"><div class="chart-title">Expenditure Report History — stored by upload time</div><div class="pg-twrap" id="pgSnapList"></div></div>
+      </div>
+      <div class="pg-panel" id="pgP-update"><div class="panel-card" id="pgUpdateBox"></div></div>
+      <div class="pg-panel" id="pgP-log"><div class="panel-card" id="pgLogBox"></div></div>
+    </div>
+
     <div id="sec-datarequest" class="section">
       <div class="section-header">
         <div class="section-title">📝 <span>Data Request</span> — Water Resources Data Requisition</div>
@@ -2758,6 +2855,22 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
     <p id="uploadYearStatus" style="font-size:12px;color:var(--text-dim);margin-top:10px;"></p>
   </div>
 </div>
+
+<!-- ===== Progress Dashboard: weekly expenditure upload (Admin) ===== -->
+<div id="pgUploadModal">
+  <div class="pg-box">
+    <div class="dr-section-title" style="margin-top:0;">UPLOAD WEEKLY EXPENDITURE REPORT</div>
+    <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Upload the Friday <b>Expenditure Report</b> (.xlsx) exported from the budget system. It is stored with the upload date &amp; time and the Progress Dashboard updates for everyone.</div>
+    <label>Expenditure report file</label><input type="file" id="pgUpFile" accept=".xlsx,.xls" onchange="pgOnFile(this)">
+    <label>Report date (Friday of the update)</label><input type="date" id="pgUpDate">
+    <div class="pg-prev" id="pgUpPrev">Choose a file to preview it.</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+      <button class="pg-btn ghost" onclick="pgCloseUpload()">Cancel</button>
+      <button class="pg-btn" id="pgUpSave" onclick="pgSaveUpload()" disabled>Save to storage</button>
+    </div>
+  </div>
+</div>
+<div id="pgToast"></div>
 
 <div class="tooltip-custom" id="tooltip"></div>
 
@@ -3764,11 +3877,13 @@ function getRiskColor(risk) {
 // onclick="showSection('yourname')" and a div id="sec-yourname" in main.
 // =====================================================================
 function showSection(name) {
+  if (name !== 'progress') { document.body.classList.remove('prog-mode'); document.querySelectorAll('#sidebar .pg-hide').forEach(e => e.classList.remove('pg-hide')); }
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const sec = document.getElementById('sec-' + name);
   if (sec) sec.classList.add('active');
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  if (name === 'progress' && window.progOnShow) window.progOnShow();
   // Spatial section contains the Leaflet map — invalidate size after reveal
   if (name === 'spatial') {
     setTimeout(() => {
@@ -9306,6 +9421,461 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
   if (window.wriDrawer) window.wriDrawer.beforeOpen = syncAccount;
   syncAccount();
+})();
+</script>
+<script>
+/* ===================================================================
+   PROGRESS DASHBOARD — budget expenditure (weekly Friday uploads, Supabase
+   Storage) + physical progress (division editors, Supabase table).
+   Uses the dashboard's existing supabaseClient / CURRENT_PERMISSION / CURRENT_NAME.
+   =================================================================== */
+(function () {
+  'use strict';
+  const BUCKET = 'wri-datasets', PREFIX = 'expenditure', TABLE = 'progress_updates', LS_KEY = 'pg_updates_v1';
+  const FY_START = new Date('2026-07-01T00:00:00+06:00'), FY_END = new Date('2027-06-30T23:59:59+06:00');
+  const DIV_LABEL = { WRMD: 'WRMD', WRPMD: 'WRPMD', WSD: 'WSD', UNSPECIFIED: 'Admin / Unassigned' };
+  const DIV_FULL = { WRMD: 'Water Resource Management Division', WRPMD: 'Water Resource Planning & Monitoring Division', WSD: 'Water Services Division', UNSPECIFIED: 'Admin / Unassigned (pay, O&M)' };
+  const DIV_COLOR = { WRMD: '#0a7adb', WRPMD: '#15a84e', WSD: '#e07800', UNSPECIFIED: '#7096b8' };
+  // Financing code (FIC) -> responsible division (same grouping as the Water PMS). Programme 213 (pay / O&M) = Admin.
+  const FIC_DIV = { '6051': 'WRMD', '6024': 'WRPMD', '6564': 'WSD', '6254': 'WRPMD', '0001': 'WRMD', '6921': 'WRMD', '4708': 'WRMD' };
+  const PROJECTS = {
+    '6051': 'Advancing Climate Resilience of Water Sector in Bhutan', '6024': 'Adaptation to Climate Induced Water Stresses through Integrated Landscape Management in Bhutan',
+    '6564': 'Enhancing Climate Resilience of the Urban Landscapes and Communities in Thimphu-Paro Region', '6254': 'Scaling and Strengthening Springshed Management in Bhutan',
+    '0001': 'Nationwide RGOB-Financed Activities', '6921': 'Climate-Resilient Spring Water Source Revival Intervention', '4708': 'Bhutan for Life' };
+  // Who may update physical progress, and for which division
+  const EDITORS = [
+    { name: 'nima wangchuk', email: 'nimaw@moenr.gov.bt', division: 'WSD' },
+    { name: 'jampel dorji', email: 'jampeld@moenr.gov.bt', division: 'WRPMD' },
+    { name: 'sonam dorji', email: 'sdorji1@moenr.gov.bt', division: 'WRMD' } ];
+  const STATUSES = ['Not Started', 'In Progress', 'Completed', 'Delayed'];
+  const ST_COLOR = { 'Not Started': '#9db4cc', 'In Progress': '#0a7adb', 'Completed': '#15a84e', 'Delayed': '#e0263d' };
+  const BASELINE_ROWS = [["207","274","001","01","6051","DEVELOP AND LAUNCH WATER MASTER PLAN FOR GASA PUNAKHA AND TSIRANG (SPILLOVER)","55.01","Professional Services",1.365,0.0],["207","274","001","02","6051","DEVELOP AND LAUNCH PUNATSHANGCHU RIVER BASIN MANAGEMENT PLAN (SPILLOVER)","55.01","Professional Services",2.65,1.567],["207","398","001","01","6024","MAPPING OF WETLANDS FOR DEVELOPMENT OF WETLAND MONITORING SYSTEM","45.01","Training - Human Resource Development",1.69,0.0],["207","398","001","01","6024","MAPPING OF WETLANDS FOR DEVELOPMENT OF WETLAND MONITORING SYSTEM","55.01","Professional Services",1.0,0.0],["207","398","001","02","6024","STREGTHEN WATER USER ASSOCIATIONS (WUAS) IN THE COMMUNITIES TO PROMOTE LOCAL OWNERSHIP AND SUSTAINABILITY SCHEME","45.02","Training - Others",0.53,0.0],["207","398","001","02","6024","STREGTHEN WATER USER ASSOCIATIONS (WUAS) IN THE COMMUNITIES TO PROMOTE LOCAL OWNERSHIP AND SUSTAINABILITY SCHEME","54.03","Computers & Peripherals",0.5,0.0],["207","398","001","03","6024","ADAPTATION PMU COST","01.01","Pay and Allowances",2.34,0.585],["207","398","001","03","6024","ADAPTATION PMU COST","11.01","Travel - Incountry",0.589,0.225],["207","398","001","03","6024","ADAPTATION PMU COST","15.02","Maintenance of Property - Vehicles",0.1,0.058],["207","398","001","03","6024","ADAPTATION PMU COST","17.08","Op. Exp. - Incountry Meetings and Celebrations",0.971,0.27],["207","398","001","03","6024","ADAPTATION PMU COST","54.02","Office Equipment",0.5,0.0],["207","398","001","03","6024","ADAPTATION PMU COST","54.03","Computers & Peripherals",1.0,0.0],["207","398","001","04","6024","CAPACITY BUILDING OF ADAPTATION PROJECT COMPONENT MANAGERS AND FOCAL PERSONS","45.01","Training - Human Resource Development",4.0,0.0],["207","398","001","05","6564","CAPACITY DEVELOPMENT ON CLIMATE SMART WATER RESOURCE MANAGEMENT","45.01","Training - Human Resource Development",6.0,0.0],["207","398","001","06","6564","ASSESSMENT OF WATER TARIFF FOR THIMPHU AND PARO TO ENSURE FINANCIAL SUSTAINABILITY","55.01","Professional Services",2.494,0.0],["207","398","001","07","6254","DEVELOP SPRING DECISION SUPPORT SYSTEM (DSS) AND MODIFY TO ACCOMMODATE BROADER WATER INFORMATION SYSTEMS ALONG WITH NATURE BASED SOLUTION AND HINDU KUSH HIMALAYA (HKH) SOLUTION PLATFORM","57.01","System Development",1.34,0.0],["207","398","001","08","6051","CARRY OUT WATER RESOURCE INVENTORY FOR PUNAKHA","55.01","Professional Services",1.342,0.0],["207","398","001","09","0001","NATIONWIDE WATER RESOURCE INVENTORY IN SAMDRUP JONGKHAR PEMAGATSHEL ZHEMGANG PUNAKHA WANGDUE CHUKHA GASA TRONGSA TRASHIGANG LHUNSTE TRASHIYANGTSE HAA MONGAR AND BUMTHANG","52.08","Plant & Equipt. - General Tools, Instruments",20.0,0.0],["207","398","001","09","0001","NATIONWIDE WATER RESOURCE INVENTORY IN SAMDRUP JONGKHAR PEMAGATSHEL ZHEMGANG PUNAKHA WANGDUE CHUKHA GASA TRONGSA TRASHIGANG LHUNSTE TRASHIYANGTSE HAA MONGAR AND BUMTHANG","55.01","Professional Services",38.162,0.0],["207","398","001","10","6921","CARRY OUT GROUNDWORK AND BUSINESS REQUIREMENT ANALYSIS FOR CENTRALIZED DATA REPOSITORY SYSTEM","55.01","Professional Services",0.9,0.0],["207","398","001","11","4708","BUILD LOCAL INSTITUTION CAPACITY AND SKILL DEVELOPMENT OF COMMUNITIES ON PAYMENT FOR ENVIRONMENTAL SERVICES (PES)","45.02","Training - Others",1.0,0.0],["207","398","001","12","4708","CARRY OUT FEASIBILITY STUDY AND DEVELOP NATIONAL PAYMENT FOR ENVIRONMENTAL SERVICES (PES) FRAMEWORK","45.01","Training - Human Resource Development",0.5,0.0],["207","398","001","12","4708","CARRY OUT FEASIBILITY STUDY AND DEVELOP NATIONAL PAYMENT FOR ENVIRONMENTAL SERVICES (PES) FRAMEWORK","55.01","Professional Services",1.65,0.0],["207","398","002","01","6051","ASSESS PPP MODEL AND RECOMMEND TARIFF SYSTEM FOR GASA AND LOBEYSA","55.01","Professional Services",4.859,0.0],["207","398","002","02","6051","SENSITISATION OF BHUTAN DRINKING WATER QUALITY STANDARDS 2025 AND NATIONAL WATER TARIFF GUIDELINE","45.02","Training - Others",1.406,0.0],["207","398","002","03","6051","DEVELOP CAPACITY AND SKILLS ON CLIMATE AND HYDROLOGICAL MODELING AND SPRINGSHED MANAGEMENT","45.01","Training - Human Resource Development",5.88,0.0],["207","398","002","04","6051","SUPPORT DIAGNOSIS ANALYTICAL AND WATER QUALITY TESTING FACILITIES","52.07","Plant & Equipt. - Hospital/Lab. Equipment",0.927,0.0],["207","398","002","05","0001","CONDUCT WATER QUALITY ASSESSMENT","45.02","Training - Others",0.3,0.0],["207","398","003","01","6024","FEASIBILITY STUDY AND DEVELOPMENT AND IMPLEMENTATION OF PAYMENT FOR ECOSYSTEM SERVICES (PES) SCHEME","55.01","Professional Services",0.407,0.0],["207","398","003","02","6564","CONDUCT FEASIBILITY STUDY ON NATURE BASED SOLUTION (NBS) FINANCING MODELS IN URBAN DEVELOPMENT","45.01","Training - Human Resource Development",0.6,0.0],["207","398","003","02","6564","CONDUCT FEASIBILITY STUDY ON NATURE BASED SOLUTION (NBS) FINANCING MODELS IN URBAN DEVELOPMENT","55.01","Professional Services",0.2,0.0],["207","398","003","03","6051","ESTABLISH PAYMENT FOR ECOSYSTEM SERVICES (PES) SYSTEM FOR OKALUM WATERSHED MANAGEMENT","55.01","Professional Services",0.345,0.0],["207","398","003","04","6051","UPSCALE EXISTING PAYMENT FOR ECOSYSTEM SERVICES SCHEME FOR THAKHORLING COMMUNITY AND TSIRANG","55.01","Professional Services",0.3,0.0],["207","398","003","05","6024","CONDUCT RAPID WATERSHED ASSESSMENT AND IMPLEMENT IDENTIFIED INTERVENTION MEASURES FOR WATER SOURCE REVIVAL AND MONITORING","55.01","Professional Services",0.63,0.0],["207","398","003","06","6564","REHABILITATATION AND PROTECTION OF WATER SOURCES NATURAL STREAMS AND CATCHMENTS FOR IMPROVED FILTRATION RECHARGE AND RESTORATION","45.02","Training - Others",0.509,0.045],["207","398","003","06","6564","REHABILITATATION AND PROTECTION OF WATER SOURCES NATURAL STREAMS AND CATCHMENTS FOR IMPROVED FILTRATION RECHARGE AND RESTORATION","51.06","Exp. on Structure - Water Supply & Sanitation",4.129,0.0],["207","398","003","07","6051","REVIVAL AND RESTORATION OF SPRINGS STREAMS PONDS AND DEGRADED WATERSHEDS AREA THROUGH AFFORESTATION","45.02","Training - Others",0.48,0.136],["207","398","003","07","6051","REVIVAL AND RESTORATION OF SPRINGS STREAMS PONDS AND DEGRADED WATERSHEDS AREA THROUGH AFFORESTATION","51.06","Exp. on Structure - Water Supply & Sanitation",4.5,0.0],["207","398","003","08","6024","IMPLEMENT IDENTIFIED INTERVENTION MEASURES","51.08","Exp. on Structure - Others",2.0,0.0],["207","398","003","08","6024","IMPLEMENT IDENTIFIED INTERVENTION MEASURES","52.08","Plant & Equipt. - General Tools, Instruments",0.7,0.0],["207","398","003","08","6024","IMPLEMENT IDENTIFIED INTERVENTION MEASURES","55.01","Professional Services",1.3,0.104],["207","398","003","09","6024","IMPLEMENTATION OF WATER SOURCE REVIVAL ACTIVITIES","51.08","Exp. on Structure - Others",2.5,0.0],["207","398","003","09","6024","IMPLEMENTATION OF WATER SOURCE REVIVAL ACTIVITIES","55.01","Professional Services",1.1,0.103],["207","398","003","10","6024","MONITORING AND MAINTENANCE OF CONSERVATION OR RESTORATION ACTIVITIES","55.01","Professional Services",0.312,0.0],["207","398","003","11","6564","PROCUREMENT OF FLOW PROBE AND MET STATIONS AND INSTALLATION OF MET STATIONS","51.08","Exp. on Structure - Others",0.0,-0.034],["207","398","005","01","6921","CONDUCT FEASIBILITY STUDIES OF VARIOUS NBS FINANCING MODEL IN VARIOUS URBAN DEVELOPMENT","55.01","Professional Services",0.0,0.0],["207","398","006","01","6921","COMPREHENSIVE MAPPING OF SPRING SOURCES AND INDENTIFICATION OF POTENTIAL RECHARGE AREAS INCLUDING CONSULTATION WORKSHOPS IN DAGANA AND PARO","55.01","Professional Services",0.8,0.171],["213","203","001","01","0001","PAY AND ALLOWANCES","01.01","Pay and Allowances",16.734,4.801],["213","203","001","01","0001","PAY AND ALLOWANCES","24.03","Contributions - Provident Fund",1.612,0.367],["213","203","001","01","0001","PAY AND ALLOWANCES","25.01","Retirement Benefits",0.115,0.114],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","11.01","Travel - Incountry",0.15,0.088],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","12.01","Utilities -Telephones and Internet",0.032,0.004],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","12.03","Utilities - Electricity, Water, Sewerage,Waste",0.075,0.009],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","14.01","S & M - Office Supplies, Printing, Publications",0.046,0.0],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","15.01","Maintenance of Property - Buildings",0.05,0.002],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","15.02","Maintenance of Property - Vehicles",0.16,0.03],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","15.07","Maintenance of Property - Computers",0.004,0.0],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","17.08","Op. Exp. - Incountry Meetings and Celebrations",0.05,0.025],["213","203","001","02","0001","OPERATION AND MANAGEMENT SERVICES","18.01","Hospitality & Entertainment",0.08,0.014]];
+  const BASELINE = { id: 'baseline', reportDate: '2026-10-07', uploadedAt: '2026-10-07T00:00:00+06:00', uploadedBy: 'Initial report (ExpenditureReport_DoW.xlsx)', fileName: 'ExpenditureReport_DoW.xlsx',
+    rows: (BASELINE_ROWS || []).map(r => ({ prg: r[0], sprg: r[1], act: r[2], sact: r[3], fic: r[4], sactT: r[5], obc: r[6], obcT: r[7], b: r[8], e: r[9] })) };
+
+  const sb = () => supabaseClient;
+  const PG = { snaps: [], cache: {}, selId: null, updates: [], local: false, division: null, uid: null, acts: [], f: { division: '', project: '', status: '' }, charts: {}, tab: 'overview', loaded: false, pending: null, sheetErr: null };
+  const $ = id => document.getElementById(id);
+  const r3 = v => Math.round(v * 1000) / 1000;
+  const fm = (v, d = 3) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const tz = { timeZone: 'Asia/Thimphu' };
+  const fDate = d => new Date(d).toLocaleDateString('en-GB', { ...tz, weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+  const fDT = d => new Date(d).toLocaleString('en-GB', { ...tz, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' BST';
+  const norm = s => String(s || '').toLowerCase().replace(/[_\s]+/g, ' ').trim();
+  const ACR = new Set(['PES', 'PPP', 'NBS', 'DSS', 'HKH', 'WUAS', 'PMU', 'RGOB', 'WUA', 'O&M']);
+  const SMALL = new Set(['and', 'of', 'for', 'to', 'on', 'in', 'the', 'with', 'at', 'a']);
+  function title(s) {
+    return String(s || '').toLowerCase().split(/\s+/).map((w, i) => {
+      const bare = w.replace(/[()]/g, '').toUpperCase();
+      if (ACR.has(bare)) return w.toUpperCase();
+      if (i > 0 && SMALL.has(w)) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ');
+  }
+  function toast(msg, ms = 3800) { const t = $('pgToast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', ms); }
+  const activeSection = () => $('sec-progress') && $('sec-progress').classList.contains('active');
+
+  /* ---------- roles ---------- */
+  async function resolveRole() {
+    PG.division = null; PG.uid = null; let email = '';
+    try { const { data } = await sb().auth.getSession(); if (data.session) { email = (data.session.user.email || '').toLowerCase(); PG.uid = data.session.user.id; } } catch (e) {}
+    const nm = norm(CURRENT_NAME);
+    const ed = EDITORS.find(x => x.name === nm || x.email === email);
+    PG.division = ed ? ed.division : null;
+  }
+  const isAdmin = () => CURRENT_PERMISSION === 'admin';
+  const canEdit = a => !!PG.division && a.division === PG.division && !a.noProgress && a.status !== 'Completed';
+  const DAY = 864e5, within24 = t => (Date.now() - new Date(t)) < DAY;
+  const autoAt = t => fDT(new Date(new Date(t).getTime() + DAY));
+  const isPendU = u => !u.confirmed_at && within24(u.created_at);
+  const isPendS = x => x.id !== 'baseline' && !x.confirmed && within24(x.uploadedAt);
+    const ASK = 'Are you confident this is correct?\n\nOK = Confirm now (final, cannot be removed)\nCancel = keep it pending for one day — you can still remove & redo it, and it is confirmed automatically after 24 hours.';
+
+  /* ---------- parse the Expenditure Report workbook ---------- */
+  function parseSheet(wb) {
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const a = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
+    const hi = a.findIndex(r => r && String(r[0] || '').trim() === 'PRG' && String(r[7] || '').trim().toUpperCase() === 'BUDGET');
+    if (hi < 0) throw new Error('This does not look like the Expenditure Report (header row PRG … BUDGET / EXPENDITURE not found).');
+    let printed = null, fy = null;
+    for (let i = 0; i < hi; i++) (a[i] || []).forEach((c, j) => {
+      if (String(c || '').trim() === 'Printed Date:') printed = (a[i].slice(j + 1).find(x => x != null) || null);
+      if (/^FISCAL YEAR/i.test(String(c || ''))) fy = String(c).trim();
+    });
+    const rows = []; let cur = {}, gtB = null, gtE = null;
+    const S = x => x == null ? '' : String(x).trim();
+    for (let i = hi + 1; i < a.length; i++) {
+      const r = a[i] || []; const t = S(r[6]);
+      if (/^GRAND TOTAL/i.test(t)) { gtB = Number(r[7]) || 0; gtE = Number(r[8]) || 0; continue; }
+      if (/^TOTAL/i.test(t)) continue;
+      if (S(r[0])) cur = { ...cur, prg: S(r[0]) };
+      else if (S(r[1])) cur = { ...cur, sprg: S(r[1]) };
+      else if (S(r[2])) cur = { ...cur, act: S(r[2]).padStart(3, '0') };
+      else if (S(r[3])) cur = { ...cur, sact: S(r[3]).padStart(2, '0'), sactT: t };
+      else if (S(r[4])) cur = { ...cur, fic: S(r[4]).padStart(4, '0') };
+      else if (S(r[5])) rows.push({ prg: cur.prg, sprg: cur.sprg, act: cur.act, sact: cur.sact, fic: cur.fic, sactT: cur.sactT, obc: S(r[5]), obcT: t, b: r3(Number(r[7]) || 0), e: r3(Number(r[8]) || 0) });
+    }
+    if (!rows.length) throw new Error('No budget lines were found in the file.');
+    const sumB = r3(rows.reduce((s, x) => s + x.b, 0)), sumE = r3(rows.reduce((s, x) => s + x.e, 0));
+    return { rows, printed, fy, sumB, sumE, gtB, gtE };
+  }
+  function printedISO(p) {
+    if (!p) return null; if (typeof p === 'number') { const d = new Date(Math.round((p - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+    const m = String(p).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null;
+  }
+
+  /* ---------- load: snapshots (Storage) + updates (table) ---------- */
+  async function loadSnaps() {
+    const snaps = [BASELINE]; PG.sheetErr = null;
+    try {
+      const { data, error } = await sb().storage.from(BUCKET).list(PREFIX, { limit: 500, sortBy: { column: 'name', order: 'asc' } });
+      if (error) throw error;
+      const folders = (data || []).filter(x => !x.id).map(x => x.name);
+      await Promise.all(folders.map(async f => {
+        if (!PG.cache[f]) {
+          try {
+            const { data: sg, error: e1 } = await sb().storage.from(BUCKET).createSignedUrl(`${PREFIX}/${f}/data.json`, 3600);
+            if (e1) throw e1;
+            const j = await (await fetch(sg.signedUrl)).json();
+            PG.cache[f] = { id: f, reportDate: j.reportDate, uploadedAt: j.uploadedAt, uploadedBy: j.uploadedBy, fileName: j.fileName, rows: j.rows };
+          } catch (e) { /* not an expenditure folder / unreadable */ }
+        }
+        if (PG.cache[f]) snaps.push(PG.cache[f]);
+      }));
+      await Promise.all(snaps.filter(x => x.id !== 'baseline' && within24(x.uploadedAt)).map(async x => { try { const { data: fl } = await sb().storage.from(BUCKET).list(`${PREFIX}/${x.id}`); x.confirmed = (fl || []).some(f => f.name === 'confirmed.json'); } catch (e) {} }));
+    } catch (e) { PG.sheetErr = e.message || String(e); }
+    snaps.sort((a, b) => (a.reportDate + a.uploadedAt).localeCompare(b.reportDate + b.uploadedAt));
+    PG.snaps = snaps;
+    if (!PG.selId || !snaps.find(s => s.id === PG.selId) || PG.selLatest) { PG.selId = snaps[snaps.length - 1].id; PG.selLatest = true; }
+  }
+  async function loadUpdates() {
+    try {
+      const { data, error } = await sb().from(TABLE).select('*').order('created_at', { ascending: false }).limit(3000);
+      if (error) throw error; PG.updates = data || []; PG.local = false;
+    } catch (e) {
+      PG.local = true; try { PG.updates = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (x) { PG.updates = []; }
+    }
+  }
+  async function loadAll() { await Promise.all([loadSnaps(), loadUpdates()]); PG.loaded = true; renderAll(); }
+
+  /* ---------- build + filter ---------- */
+  const snapById = id => PG.snaps.find(s => s.id === id);
+  function latestMap() { const m = {}; PG.updates.forEach(u => { const c = m[u.activity_key]; if (!c || new Date(u.created_at) > new Date(c.created_at)) m[u.activity_key] = u; }); return m; }
+  function buildActs(snap) {
+    const lm = latestMap(), map = {};
+    snap.rows.forEach(r => {
+      const k = `${r.sprg}-${r.act}-${r.sact}`;
+      let a = map[k];
+      if (!a) { const adm = r.prg === '213'; a = map[k] = { key: k, name: title(r.sactT), fic: r.fic, project: PROJECTS[r.fic] || r.fic, division: adm ? 'UNSPECIFIED' : (FIC_DIV[r.fic] || 'UNSPECIFIED'), noProgress: adm, budget: 0, exp: 0, obc: [] }; }
+      a.budget = r3(a.budget + r.b); a.exp = r3(a.exp + r.e); a.obc.push(r);
+    });
+    return Object.values(map).map(a => {
+      const u = lm[a.key]; a.status = a.noProgress ? '—' : (u ? u.status : 'Not Started'); a.pct = a.noProgress ? null : (u ? Number(u.pct_physical) : 0);
+      a.updatedAt = u ? u.created_at : null; a.updatedBy = u ? u.updated_by : null; a.remarks = u ? (u.remarks || '') : ''; return a;
+    });
+  }
+  const pass = a => (!PG.f.division || a.division === PG.f.division) && (!PG.f.project || a.fic === PG.f.project) && (!PG.f.status || a.status === PG.f.status);
+  function group(acts, keyFn) {
+    const g = {};
+    acts.forEach(a => { const k = keyFn(a); const o = g[k] || (g[k] = { key: k, budget: 0, exp: 0, n: 0, wb: 0, wp: 0 }); o.budget += a.budget; o.exp += a.exp; o.n++; if (!a.noProgress && a.budget > 0) { o.wb += a.budget; o.wp += a.budget * a.pct / 100; } });
+    Object.values(g).forEach(o => { o.balance = r3(o.budget - o.exp); o.util = o.budget > 0 ? o.exp / o.budget * 100 : 0; o.phys = o.wb > 0 ? o.wp / o.wb * 100 : null; });
+    return g;
+  }
+  const total = acts => { const t = group(acts, () => 'T').T || { budget: 0, exp: 0, balance: 0, util: 0, phys: null, n: 0 }; return t; };
+  const fyElapsed = d => Math.max(0, Math.min(100, (new Date(d) - FY_START) / (FY_END - FY_START) * 100));
+  function filterList() {
+    const s = snapById(PG.selId);
+    return [['Division', PG.f.division ? `${DIV_LABEL[PG.f.division]} — ${DIV_FULL[PG.f.division]}` : 'All divisions'],
+      ['Project', PG.f.project ? `${PG.f.project} · ${PROJECTS[PG.f.project] || ''}` : 'All projects'],
+      ['Status', PG.f.status || 'All statuses'],
+      ['Expenditure report', s ? `${fDate(s.reportDate)} (uploaded ${fDT(s.uploadedAt)})` : '—']];
+  }
+  const filterText = () => filterList().map(x => `${x[0]}: ${x[1]}`).join('  |  ');
+  const fileSuffix = () => ['Progress', PG.f.division || 'AllDiv', PG.f.project || 'AllProj', PG.f.status ? PG.f.status.replace(/\s/g, '') : null, (snapById(PG.selId) || {}).reportDate].filter(Boolean).join('_');
+
+  /* ---------- render ---------- */
+  function renderAll() {
+    const snap = snapById(PG.selId); if (!snap) return;
+    PG.allActs = buildActs(snap); PG.acts = PG.allActs.filter(pass);
+    renderFilters(); renderNote(); renderKpis(); renderInsights(); renderCharts(); renderActTable(); renderObc(); renderSnapList(); renderUpdate(); renderLog();
+    $('pgBadge').textContent = (PG.f.division ? DIV_LABEL[PG.f.division] : 'ALL DIVISIONS') + (PG.f.project ? ' · ' + PG.f.project : '');
+    document.querySelectorAll('#sec-progress .admin-only-btn').forEach(b => b.style.display = isAdmin() ? 'inline-flex' : 'none');
+  }
+  function fillSel(id, opts, val) { const el = $(id); el.innerHTML = opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(''); el.value = val; }
+  function renderFilters() {
+    const divs = [...new Set(PG.allActs.map(a => a.division))];
+    fillSel('pgFDivision', [['', 'All divisions'], ...['WRMD', 'WRPMD', 'WSD', 'UNSPECIFIED'].filter(d => divs.includes(d)).map(d => [d, `${DIV_LABEL[d]}`])], PG.f.division);
+    const fics = [...new Set(PG.allActs.filter(a => !PG.f.division || a.division === PG.f.division).map(a => a.fic))];
+    if (PG.f.project && !fics.includes(PG.f.project)) PG.f.project = '';
+    fillSel('pgFProject', [['', 'All projects'], ...fics.map(f => [f, `${f} · ${PROJECTS[f] || f}`])], PG.f.project);
+    fillSel('pgFStatus', [['', 'All statuses'], ...STATUSES.map(s => [s, s])], PG.f.status);
+    fillSel('pgFSnap', [...PG.snaps].reverse().map(s => [s.id, `${fDate(s.reportDate)} · uploaded ${fDT(s.uploadedAt)}`]), PG.selId);
+    $('pgChips').innerHTML = '<b>FILTERS USED</b>' + filterList().map(x => `<span class="pg-chip"><i>${esc(x[0])}:</i>${esc(x[1])}</span>`).join('');
+  }
+  function renderNote() {
+    const s = snapById(PG.selId), el = $('pgNote'); let m = `Showing the expenditure report dated <b>${fDate(s.reportDate)}</b> (stored ${fDT(s.uploadedAt)}, ${esc(s.uploadedBy)}) — Nu. in millions, FY 2026-27. `;
+    m += CURRENT_PERMISSION ? (PG.division ? `You can update physical progress for <b>${DIV_LABEL[PG.division]}</b> activities.` : (isAdmin() ? 'You can upload the weekly expenditure report.' : 'Your account has view access; physical progress is updated by the division focal persons.')) : 'Sign in as a division focal person / Admin to update progress.';
+    const warn = PG.local ? ' <b>⚠ Progress table not found in Supabase — updates are saved in this browser only. Run supabase_setup.sql to share them live.</b>' : (PG.sheetErr ? ` <b>⚠ Could not list stored reports (${esc(PG.sheetErr)}); showing the built-in report.</b>` : '');
+    el.innerHTML = m + warn; el.className = 'pg-note' + (warn ? ' warn' : '');
+  }
+  function kpi(label, value, sub, color) { return `<div class="kpi-card" style="--card-accent:${color}"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div style="font-size:11px;color:var(--text-dim);margin-top:4px;">${sub}</div></div>`; }
+  function renderKpis() {
+    const t = total(PG.acts), s = snapById(PG.selId), el = fyElapsed(s.reportDate), prog = PG.acts.filter(a => !a.noProgress);
+    const cnt = st => prog.filter(a => a.status === st).length;
+    const lastUp = PG.acts.map(a => a.updatedAt).filter(Boolean).sort().pop();
+    $('pgKpis').innerHTML =
+      kpi('Total Budget', 'Nu. ' + fm(t.budget, 2) + ' M', `${PG.acts.length} activities`, '#0a7adb') +
+      kpi('Expenditure', 'Nu. ' + fm(t.exp, 2) + ' M', `as of ${fDate(s.reportDate)}`, '#e07800') +
+      kpi('Balance', 'Nu. ' + fm(t.balance, 2) + ' M', 'unspent budget', '#15a84e') +
+      kpi('Budget Utilisation', fm(t.util, 1) + '%', `FY elapsed ${fm(el, 0)}%`, t.util + 5 < el ? '#e0263d' : '#15a84e') +
+      kpi('Physical Progress', t.phys == null ? '—' : fm(t.phys, 1) + '%', 'budget-weighted', '#6a3fb5') +
+      kpi('Activities', `${cnt('Completed')} / ${prog.length}`, `${cnt('In Progress')} in progress · ${cnt('Delayed')} delayed`, '#0099b4') +
+      kpi('Last Progress Update', lastUp ? fDate(lastUp) : '—', lastUp ? fDT(lastUp) : 'no updates yet', '#c49800');
+  }
+  function renderInsights() {
+    const L = [], t = total(PG.acts), s = snapById(PG.selId), el = fyElapsed(s.reportDate);
+    if (!PG.acts.length) { $('pgInsights').innerHTML = '<div class="chart-title">Analysis</div><div style="color:var(--text-dim)">No activities match the selected filters.</div>'; return; }
+    const gap = t.util - el;
+    L.push([gap < -5 ? 'bad' : 'good', `Nu. ${fm(t.exp, 2)} M of Nu. ${fm(t.budget, 2)} M has been spent (<b>${fm(t.util, 1)}%</b>) with <b>${fm(el, 0)}%</b> of the fiscal year elapsed — ${gap < -5 ? `spending is <b>${fm(-gap, 1)} points behind</b> a straight-line pace` : gap > 5 ? `spending is ${fm(gap, 1)} points ahead of a straight-line pace` : 'spending is broadly on pace'}.`]);
+    const gd = group(PG.acts, a => a.division), ds = Object.values(gd).sort((a, b) => b.util - a.util);
+    if (ds.length > 1) L.push(['', `Highest utilisation: <b>${DIV_LABEL[ds[0].key]}</b> (${fm(ds[0].util, 1)}%); lowest: <b>${DIV_LABEL[ds[ds.length - 1].key]}</b> (${fm(ds[ds.length - 1].util, 1)}%).`]);
+    const big = [...PG.acts].filter(a => a.budget - a.exp > 0).sort((a, b) => (b.budget - b.exp) - (a.budget - a.exp)).slice(0, 3);
+    if (big.length) L.push(['warn', 'Largest unspent balances: ' + big.map(a => `<b>${esc(a.name.length > 55 ? a.name.slice(0, 55) + '…' : a.name)}</b> (Nu. ${fm(a.budget - a.exp, 2)} M)`).join('; ') + '.']);
+    const ahead = PG.acts.filter(a => !a.noProgress && a.exp > 0.05 && a.pct === 0);
+    if (ahead.length) L.push(['bad', `${ahead.length} activit${ahead.length > 1 ? 'ies have' : 'y has'} expenditure but <b>0% reported physical progress</b>: ${ahead.slice(0, 3).map(a => esc(a.name.slice(0, 40))).join('; ')}${ahead.length > 3 ? '…' : ''} — progress may need updating.`]);
+    const low = PG.acts.filter(a => !a.noProgress && a.pct > 0 && a.budget > 0 && a.pct - a.exp / a.budget * 100 > 25);
+    if (low.length) L.push(['warn', `${low.length} activit${low.length > 1 ? 'ies show' : 'y shows'} physical progress well ahead of expenditure (bills/claims may be pending).`]);
+    const neg = PG.acts.filter(a => a.exp < 0); if (neg.length) L.push(['warn', `Negative expenditure (adjustment / reversal) recorded for: ${neg.map(a => esc(a.name.slice(0, 45))).join('; ')}.`]);
+    const stale = PG.acts.filter(a => !a.noProgress && (!a.updatedAt || (Date.now() - new Date(a.updatedAt)) > 14 * 864e5));
+    if (stale.length) L.push(['warn', `${stale.length} of ${PG.acts.filter(a => !a.noProgress).length} activities have <b>no physical-progress update in the last 14 days</b>.`]);
+    const idx = PG.snaps.findIndex(x => x.id === PG.selId), prev = idx > 0 ? PG.snaps[idx - 1] : null;
+    if (prev) { const pa = buildActs(prev).filter(pass), pt = total(pa); L.push(['', `Since the previous report (${fDate(prev.reportDate)}): expenditure changed by <b>Nu. ${fm(t.exp - pt.exp, 3)} M</b> (${fm(t.util - pt.util, 1)} points of utilisation).`]); }
+    $('pgInsights').innerHTML = '<div class="chart-title">Analysis <span>AUTO-GENERATED FROM THE CURRENT FILTERS</span></div><ul>' + L.map(x => `<li class="${x[0]}">${x[1]}</li>`).join('') + '</ul>';
+  }
+
+  /* ---------- charts ---------- */
+  const CHART_DEFS = [['pgDiv', 'Budget vs Expenditure — Division wise', 'BAR'], ['pgProj', 'Budget vs Expenditure — Project wise', 'BAR'], ['pgPhys', 'Financial vs Physical Progress (%) — Division wise', 'BAR'],
+    ['pgStatus', 'Activity Status', 'DONUT'], ['pgTrend', 'Cumulative Expenditure by Weekly Report', 'LINE'], ['pgObc', 'Budget vs Expenditure — by Object Code (top 8)', 'BAR']];
+  function buildCards() {
+    $('pgChartGrid').innerHTML = CHART_DEFS.map(c => `<div class="chart-card"><div class="pg-chead"><div class="chart-title">${c[1]} <span>${c[2]}</span></div><div style="display:flex;gap:6px;"><button class="export-btn" onclick="pgExportPNG('${c[0]}','${c[1].replace(/'/g, '')}')">📷 PNG</button><button class="export-btn" onclick="pgExportChartXL('${c[0]}','${c[1].replace(/'/g, '')}')" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);color:#2e7d32;border-color:rgba(46,125,50,.3);">📋 Excel</button></div></div><div class="pg-ch"><canvas id="${c[0]}"></canvas></div></div>`).join('');
+  }
+  function mk(id, cfg) {
+    if (PG.charts[id]) PG.charts[id].destroy();
+    const cs = getComputedStyle(document.documentElement), tx = (cs.getPropertyValue('--text-secondary') || '#2a5080').trim(), gr = (cs.getPropertyValue('--border') || '#c8dff5').trim();
+    cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false }, cfg.options || {});
+    cfg.options.plugins = Object.assign({ legend: { position: 'bottom', labels: { color: tx, boxWidth: 12 } } }, cfg.options.plugins || {});
+    if (cfg.type !== 'doughnut') cfg.options.scales = Object.assign({ x: { ticks: { color: tx }, grid: { color: gr } }, y: { ticks: { color: tx }, grid: { color: gr } } }, cfg.options.scales || {});
+    PG.charts[id] = new Chart($(id).getContext('2d'), cfg);
+  }
+  const short = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+  function renderCharts() {
+    if (!$('pgDiv')) buildCards();
+    const acts = PG.acts, nu = { callbacks: { label: c => `${c.dataset.label}: Nu. ${fm(c.parsed.y != null && c.chart.options.indexAxis !== 'y' ? c.parsed.y : c.parsed.x, 3)} M` } };
+    const gd = group(acts, a => a.division), dk = Object.keys(gd);
+    mk('pgDiv', { type: 'bar', data: { labels: dk.map(k => DIV_LABEL[k]), datasets: [{ label: 'Budget', data: dk.map(k => r3(gd[k].budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: dk.map(k => r3(gd[k].exp)), backgroundColor: '#e07800' }] }, options: { plugins: { tooltip: nu }, scales: { y: { title: { display: true, text: 'Nu. million' } } } } });
+    const gp = group(acts, a => a.fic), pk = Object.keys(gp);
+    mk('pgProj', { type: 'bar', data: { labels: pk.map(k => `${k} · ${short(PROJECTS[k] || k, 30)}`), datasets: [{ label: 'Budget', data: pk.map(k => r3(gp[k].budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: pk.map(k => r3(gp[k].exp)), backgroundColor: '#e07800' }] }, options: { indexAxis: 'y', plugins: { tooltip: nu }, scales: { x: { title: { display: true, text: 'Nu. million' } } } } });
+    const pdk = dk.filter(k => gd[k].phys != null);
+    mk('pgPhys', { type: 'bar', data: { labels: pdk.map(k => DIV_LABEL[k]), datasets: [{ label: 'Financial (expenditure ÷ budget)', data: pdk.map(k => +gd[k].util.toFixed(1)), backgroundColor: '#e07800' }, { label: 'Physical (budget-weighted)', data: pdk.map(k => +gd[k].phys.toFixed(1)), backgroundColor: '#15a84e' }] }, options: { scales: { y: { min: 0, max: 100, title: { display: true, text: '%' } } } } });
+    const prog = acts.filter(a => !a.noProgress);
+    mk('pgStatus', { type: 'doughnut', data: { labels: STATUSES, datasets: [{ label: 'Activities', data: STATUSES.map(s => prog.filter(a => a.status === s).length), backgroundColor: STATUSES.map(s => ST_COLOR[s]), borderWidth: 2 }] }, options: { cutout: '58%' } });
+    const byDate = {}; PG.snaps.forEach(s => { byDate[s.reportDate] = s; });
+    const ts = Object.values(byDate).sort((a, b) => a.reportDate.localeCompare(b.reportDate)), tt = ts.map(s => total(buildActs(s).filter(pass)));
+    mk('pgTrend', { type: 'line', data: { labels: ts.map(s => new Date(s.reportDate).toLocaleDateString('en-GB', { ...tz, day: '2-digit', month: 'short' })), datasets: [{ label: 'Cumulative expenditure', data: tt.map(t => r3(t.exp)), borderColor: '#e07800', backgroundColor: 'rgba(224,120,0,.15)', fill: true, tension: .25, pointRadius: 4 }, { label: 'Budget', data: tt.map(t => r3(t.budget)), borderColor: '#0a7adb', borderDash: [6, 4], pointRadius: 0 }] }, options: { scales: { y: { title: { display: true, text: 'Nu. million' } } } } });
+    const ob = {}; acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = { n: `${r.obc} ${r.obcT}`, b: 0, e: 0 }); o.b += r.b; o.e += r.e; }));
+    const top = Object.values(ob).sort((a, b) => b.b - a.b).slice(0, 8); PG.obcAll = ob;
+    mk('pgObc', { type: 'bar', data: { labels: top.map(o => short(o.n, 34)), datasets: [{ label: 'Budget', data: top.map(o => r3(o.b)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: top.map(o => r3(o.e)), backgroundColor: '#e07800' }] }, options: { indexAxis: 'y', plugins: { tooltip: nu }, scales: { x: { title: { display: true, text: 'Nu. million' } } } } });
+  }
+
+  /* ---------- tables ---------- */
+  const tag = s => `<span class="pg-tag s-${String(s).replace(/\s/g, '')}">${esc(s)}</span>`;
+  function renderActTable() {
+    const rows = [...PG.acts].sort((a, b) => a.division.localeCompare(b.division) || b.budget - a.budget), t = total(PG.acts);
+    $('pgActCount').textContent = `(${rows.length})`;
+    $('pgActTable').innerHTML = `<table class="pg-t"><thead><tr><th>Division</th><th>Project (FIC)</th><th>Activity</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th>Utilisation</th><th>Status</th><th class="num">Physical %</th><th>Last update</th></tr></thead><tbody>` +
+      (rows.map(a => { const u = a.budget > 0 ? a.exp / a.budget * 100 : 0; return `<tr><td>${DIV_LABEL[a.division]}</td><td>${a.fic}</td><td>${esc(a.name)}</td><td class="num">${fm(a.budget)}</td><td class="num">${fm(a.exp)}</td><td class="num">${fm(a.budget - a.exp)}</td><td><div class="pg-bar"><div style="width:${Math.max(0, Math.min(100, u))}%"></div></div><small>${fm(u, 1)}%</small></td><td>${a.noProgress ? '—' : tag(a.status)}</td><td class="num">${a.pct == null ? '—' : fm(a.pct, 0)}</td><td>${a.updatedAt ? fDT(a.updatedAt) + '<br><small>' + esc(a.updatedBy) + '</small>' : '—'}</td></tr>`; }).join('') || '<tr><td colspan="10">No activities match the filters.</td></tr>') +
+      `<tr class="tot"><td colspan="3">TOTAL</td><td class="num">${fm(t.budget)}</td><td class="num">${fm(t.exp)}</td><td class="num">${fm(t.balance)}</td><td>${fm(t.util, 1)}%</td><td></td><td class="num">${t.phys == null ? '—' : fm(t.phys, 1)}</td><td></td></tr></tbody></table>`;
+  }
+  function renderObc() {
+    const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = { c: r.obc, n: r.obcT, b: 0, e: 0 }); o.b += r.b; o.e += r.e; }));
+    const rows = Object.values(ob).sort((a, b) => b.b - a.b);
+    $('pgObcTable').innerHTML = `<table class="pg-t"><thead><tr><th>Code</th><th>Object code</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th class="num">Util. %</th></tr></thead><tbody>` + rows.map(o => `<tr><td>${o.c}</td><td>${esc(o.n)}</td><td class="num">${fm(o.b)}</td><td class="num">${fm(o.e)}</td><td class="num">${fm(o.b - o.e)}</td><td class="num">${o.b > 0 ? fm(o.e / o.b * 100, 1) : '—'}</td></tr>`).join('') + '</tbody></table>';
+  }
+  function renderSnapList() {
+    const bt = (fn, id, t) => `<button class="pg-btn ghost" style="padding:3px 9px;font-size:11px" onclick="${fn}('${esc(id)}')">${t}</button> `;
+    $('pgSnapList').innerHTML = `<table class="pg-t" style="min-width:700px"><thead><tr><th>Report date</th><th>Stored (upload time, BST)</th><th>Uploaded by</th><th>File</th><th class="num">Budget</th><th class="num">Expenditure</th><th>Status</th><th>Manage</th></tr></thead><tbody>` +
+      [...PG.snaps].reverse().map(x => { const b = r3(x.rows.reduce((t, r) => t + r.b, 0)), e = r3(x.rows.reduce((t, r) => t + r.e, 0));
+        const pend = isPendS(x), st = x.id === 'baseline' ? 'Built-in' : (pend ? `<span class="pg-tag s-Delayed">⏳ Pending — auto-confirms ${autoAt(x.uploadedAt)}</span>` : '<span class="pg-tag s-Completed">✔ Confirmed</span>');
+        const mg = x.id === 'baseline' ? '' : (isAdmin() ? (pend ? bt('pgConfSnap', x.id, '✔ Confirm') + bt('pgDelSnap', x.id, 'Remove &amp; re-upload') : '') : '');
+        return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or remove it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. All times are Bhutan Standard Time (BST).</div>';
+  }
+  /* ---------- update progress (division editors) ---------- */
+  function renderUpdate() {
+    const box = $('pgUpdateBox');
+    let head = '<div class="chart-title">Update Physical Progress <span>SAVED WITH DATE &amp; TIME</span></div>';
+    if (!CURRENT_PERMISSION) { box.innerHTML = head + '<p style="line-height:1.7">Please <b>sign in</b> (Staff / Admin Login) to update progress. Updates are made by <b>Nima Wangchuk (WSD)</b>, <b>Jampel Dorji (WRPMD)</b> and <b>Sonam Dorji (WRMD)</b> for their own division’s activities.</p>'; return; }
+    head += PG.division ? `<p style="margin-bottom:12px;font-size:12.5px;color:var(--text-secondary)">Signed in as <b>${esc(String(CURRENT_NAME).replace(/_/g, ' '))}</b> — you can edit <b>${DIV_LABEL[PG.division]}</b> activities. Other rows are read-only. Each save is logged with the time. Once an activity is <b>Completed</b> it is locked; a wrong entry can be removed from the Update Log within 24 hours.</p>` : '<p style="margin-bottom:12px;font-size:12.5px;color:var(--accent-orange)">Your account is not assigned an activity division, so everything here is read-only.</p>';
+    const rows = PG.acts.filter(a => !a.noProgress).sort((a, b) => (canEdit(b) - canEdit(a)) || a.division.localeCompare(b.division));
+    box.innerHTML = head + `<div class="pg-twrap"><table class="pg-t"><thead><tr><th>Division</th><th>Activity</th><th class="num">Budget</th><th class="num">Spent</th><th>Status</th><th>Physical %</th><th>Remarks / evidence</th><th>Last update</th><th></th></tr></thead><tbody>` +
+      (rows.map(a => { const ed = canEdit(a), d = ed ? '' : 'disabled'; return `<tr data-k="${esc(a.key)}"><td>${DIV_LABEL[a.division]}</td><td>${esc(a.name)}</td><td class="num">${fm(a.budget)}</td><td class="num">${fm(a.exp)}</td><td><select class="pg-st" ${d}>${STATUSES.map(s => `<option ${s === a.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td><input class="pg-in pg-sm pg-pc" type="number" min="0" max="100" step="1" value="${Math.round(a.pct)}" ${d}></td><td><input class="pg-in pg-rem pg-rm" type="text" value="${esc(a.remarks)}" ${d}></td><td>${a.updatedAt ? fDT(a.updatedAt) + '<br><small>' + esc(a.updatedBy) + '</small>' : '—'}</td><td>${ed ? `<button class="pg-btn" onclick="pgSaveRow('${esc(a.key)}',this)">Save</button>` : (a.status === 'Completed' ? '<small>🔒 Completed — locked</small>' : '<small>View only</small>')}</td></tr>`; }).join('') || '<tr><td colspan="9">No activities match the filters.</td></tr>') + '</tbody></table></div>';
+  }
+  async function saveRow(key, btn) {
+    const a = PG.allActs.find(x => x.key === key); if (a && a.status === 'Completed') { toast('This activity is already Completed and locked — it cannot be submitted as completed again.'); return; }
+    if (!a || !canEdit(a)) { toast('You are not allowed to update this activity.'); return; }
+    const tr = btn.closest('tr'); let status = tr.querySelector('.pg-st').value, pct = Math.max(0, Math.min(100, parseFloat(tr.querySelector('.pg-pc').value) || 0)); const remarks = tr.querySelector('.pg-rm').value.trim();
+    if (status === 'Completed') pct = 100; else if (pct >= 100) status = 'Completed'; else if (status === 'Not Started' && pct > 0) status = 'In Progress';
+    const rec = { activity_key: key, activity_name: a.name, division: a.division, project_fic: a.fic, pct_physical: pct, status, remarks, updated_by: String(CURRENT_NAME).replace(/_/g, ' '), updated_by_id: PG.uid };
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { data, error } = await sb().from(TABLE).insert(rec).select().single();
+    if (error) {
+      PG.local = true; const loc = { ...rec, id: 'l' + Date.now(), created_at: new Date().toISOString() }; PG.updates.unshift(loc);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(PG.updates.slice(0, 500))); } catch (e) {}
+      toast('Saved in this browser only — the progress table is not set up in Supabase yet (' + error.message + ').', 7000);
+    } else { PG.updates.unshift(data); toast('Progress saved ✓ (pending confirmation)'); }
+    renderAll();
+    const nu = PG.updates[0]; if (confirm(ASK)) await confUpdate(nu.id);
+  }
+  const canRemove = u => isPendU(u) && (String(u.id).startsWith('l') || (u.updated_by_id && u.updated_by_id === PG.uid));
+  function logActions(u) {
+    const st = u.confirmed_at ? ' <span class="pg-tag s-Completed">✔ Confirmed</span>' : (isPendU(u) ? ` <span class="pg-tag s-Delayed">⏳ Pending — auto-confirms ${autoAt(u.created_at)}</span>` : ' <span class="pg-tag s-Completed">✔ Confirmed (auto)</span>');
+    const mine = String(u.id).startsWith('l') || (u.updated_by_id && u.updated_by_id === PG.uid);
+    const b = (fn, t) => ` <button class="pg-btn ghost" style="padding:3px 9px;font-size:11px" onclick="${fn}('${esc(u.id)}')">${t}</button>`;
+    return st + (mine && isPendU(u) ? b('pgConfUpdate', '✔ Confirm') + b('pgDelUpdate', 'Remove') : '');
+  }
+  async function confUpdate(id) {
+    const u = PG.updates.find(x => String(x.id) === String(id)); if (!u) return; const now = new Date().toISOString();
+    if (!String(u.id).startsWith('l')) { const { data, error } = await sb().from(TABLE).update({ confirmed_at: now }).eq('id', u.id).select(); if (error || !data || !data.length) { toast('Could not confirm: ' + (error ? error.message : 'not allowed')); return; } }
+    u.confirmed_at = now; toast('Update confirmed ✓'); renderAll();
+  }
+  async function delUpdate(id) {
+    const u = PG.updates.find(x => String(x.id) === String(id)); if (!u || !canRemove(u)) { toast('Only the author can remove an update, and only while it is pending (first 24 hours, not yet confirmed).'); return; }
+    if (!confirm('Remove this progress update? The activity returns to its previous status.')) return;
+    if (!String(u.id).startsWith('l')) { const { data, error } = await sb().from(TABLE).delete().eq('id', u.id).select(); if (error || !data || !data.length) { toast('Could not remove: ' + (error ? error.message : 'not allowed (24-hour limit)')); return; } }
+    PG.updates = PG.updates.filter(x => String(x.id) !== String(id)); try { localStorage.setItem(LS_KEY, JSON.stringify(PG.updates.filter(x => String(x.id).startsWith('l')).slice(0, 500))); } catch (e) {}
+    toast('Update removed'); renderAll();
+  }
+  function renderLog() {
+    const m = Object.fromEntries(PG.allActs.map(a => [a.key, a]));
+    const L = PG.updates.filter(u => (!PG.f.division || u.division === PG.f.division) && (!PG.f.project || String(u.project_fic) === PG.f.project) && (!PG.f.status || u.status === PG.f.status)).slice(0, 150);
+    $('pgLogBox').innerHTML = '<div class="chart-title">Update Log <span>NEWEST FIRST · CURRENT FILTERS</span></div>' + (L.length ? '<ul class="pg-log">' + L.map(u => `<li><small>${fDT(u.created_at)} · ${esc(u.updated_by)} · ${esc(DIV_LABEL[u.division] || u.division)}</small><br><b>${esc(u.activity_name || (m[u.activity_key] || {}).name || u.activity_key)}</b> → ${tag(u.status)} <b>${fm(u.pct_physical, 0)}%</b>${u.remarks ? ' — ' + esc(u.remarks) : ''}${logActions(u)}</li>`).join('') + '</ul>' : '<p style="color:var(--text-dim)">No progress updates have been recorded for these filters yet.</p>');
+  }
+
+  /* ---------- weekly expenditure upload (Admin) ---------- */
+  function lastFriday() { const d = new Date(new Date().toLocaleDateString('en-CA', tz) + 'T12:00:00Z'); while (d.getUTCDay() !== 5) d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
+  const bstFolder = () => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { ...tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value])); return `${p.year}${p.month}${p.day}T${p.hour}${p.minute}${p.second}BST`; };
+  function openUpload() {
+    if (!isAdmin()) { toast('Only the Admin (Sonam Dorji) can upload the expenditure report.'); return; }
+    PG.pending = null; $('pgUpFile').value = ''; $('pgUpDate').value = lastFriday(); $('pgUpPrev').textContent = 'Choose a file to preview it.'; $('pgUpSave').disabled = true; $('pgUploadModal').style.display = 'flex';
+  }
+  function closeUpload() { $('pgUploadModal').style.display = 'none'; PG.pending = null; }
+  async function onFile(inp) {
+    const f = inp.files[0]; if (!f) return; const pv = $('pgUpPrev'); pv.textContent = 'Reading…'; $('pgUpSave').disabled = true;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }), p = parseSheet(wb), pi = printedISO(p.printed);
+      PG.pending = { file: f, p }; if (pi) $('pgUpDate').value = pi;
+      const ok = p.gtB == null || (Math.abs(p.gtB - p.sumB) < 0.002 && Math.abs(p.gtE - p.sumE) < 0.002);
+      pv.innerHTML = `<b>${esc(f.name)}</b><br>${esc(p.fy || '')} · printed ${esc(p.printed || '—')}<br>${p.rows.length} budget lines · Budget <b>Nu. ${fm(p.sumB)} M</b> · Expenditure <b>Nu. ${fm(p.sumE)} M</b><br>${ok ? '✅ Totals match the report’s GRAND TOTAL.' : `⚠ Line totals differ from the report’s GRAND TOTAL (${fm(p.gtB)} / ${fm(p.gtE)}). Check the file before saving.`}`;
+      $('pgUpSave').disabled = false;
+    } catch (e) { pv.innerHTML = '❌ ' + esc(e.message); }
+  }
+  async function saveUpload() {
+    if (!isAdmin() || !PG.pending) return; const date = $('pgUpDate').value; if (!date) { toast('Pick the report date.'); return; }
+    if (new Date(date + 'T12:00:00').getDay() !== 5 && !confirm(`${fDate(date + 'T12:00:00')} is not a Friday. Weekly reports are normally dated Friday. Save anyway?`)) return;
+    const btn = $('pgUpSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const { file, p } = PG.pending, now = new Date(), folder = bstFolder();
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const e1 = (await sb().storage.from(BUCKET).upload(`${PREFIX}/${folder}/original_${safe}`, file, { upsert: true })).error; if (e1) throw e1;
+      const payload = { version: 1, reportDate: date, uploadedAt: now.toISOString(), uploadedBy: String(CURRENT_NAME).replace(/_/g, ' '), fileName: file.name, printedDate: p.printed, fiscalYear: p.fy, rows: p.rows };
+      const e2 = (await sb().storage.from(BUCKET).upload(`${PREFIX}/${folder}/data.json`, new Blob([JSON.stringify(payload)], { type: 'application/json' }), { upsert: true, contentType: 'application/json' })).error; if (e2) throw e2;
+      PG.cache[folder] = { id: folder, reportDate: date, uploadedAt: payload.uploadedAt, uploadedBy: payload.uploadedBy, fileName: file.name, rows: p.rows };
+      PG.selLatest = true; closeUpload(); toast('Expenditure report saved (pending confirmation) ✓'); await loadAll();
+      if (confirm(ASK)) await confSnap(folder);
+    } catch (e) { toast('Upload failed: ' + (e.message || e), 8000); }
+    btn.textContent = 'Save to storage'; btn.disabled = false;
+  }
+
+  async function delSnap(id) {
+    const s = snapById(id); if (!isAdmin() || !s || !isPendS(s)) { toast('Only the Admin can remove a report, and only while it is pending (24 hours, not yet confirmed).'); return; }
+    if (!confirm(`Remove the expenditure report dated ${fDate(s.reportDate)} (uploaded ${fDT(s.uploadedAt)})? You can then upload the corrected file.`)) return;
+    try {
+      const { data: files, error: e0 } = await sb().storage.from(BUCKET).list(`${PREFIX}/${id}`); if (e0) throw e0;
+      const paths = (files || []).map(f => `${PREFIX}/${id}/${f.name}`);
+      const { data: gone, error } = await sb().storage.from(BUCKET).remove(paths); if (error) throw error;
+      if (!gone || gone.length < paths.length) throw new Error('storage did not allow the delete (24-hour limit or permission)');
+      delete PG.cache[id]; PG.selLatest = true; toast('Report removed — you can upload the corrected file now.'); await loadAll();
+    } catch (e) { toast('Could not remove: ' + (e.message || e), 7000); }
+  }
+  async function confSnap(id) {
+    const x = snapById(id); if (!isAdmin() || !x) return;
+    const { error } = await sb().storage.from(BUCKET).upload(`${PREFIX}/${id}/confirmed.json`, new Blob([JSON.stringify({ confirmedAt: new Date().toISOString(), by: CURRENT_NAME })], { type: 'application/json' }), { upsert: false, contentType: 'application/json' });
+    if (error && !/exist|duplicate/i.test(error.message)) { toast('Could not confirm: ' + error.message); return; }
+    x.confirmed = true; toast('Expenditure report confirmed ✓'); renderAll();
+  }
+  /* ---------- exports (filters always shown) ---------- */
+  const stamp = () => new Date().toLocaleString('en-GB', tz) + ' BST';
+  function dl(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+  function exportPNG(id, ttl) {
+    const ch = PG.charts[id]; if (!ch) { toast('Chart not ready.'); return; }
+    const src = ch.canvas, sc = 2, pad = 16, hh = 86, w = src.width + pad * 2 * sc, h = src.height + hh * sc / 1 + pad * sc, c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#0a1f3a'; x.font = `700 ${15 * sc}px sans-serif`; x.fillText(ttl, pad * sc, 22 * sc);
+    x.fillStyle = '#375b82'; x.font = `${10.5 * sc}px sans-serif`; filterList().forEach((f, i) => x.fillText(`${f[0]}: ${f[1]}`, pad * sc, (38 + i * 13) * sc));
+    x.drawImage(src, pad * sc, hh * sc); x.fillStyle = '#7096b8'; x.font = `${9 * sc}px sans-serif`; x.fillText('WRI Dashboard · Progress · Nu. in millions · exported ' + stamp(), pad * sc, h - 6 * sc);
+    c.toBlob(b => dl(b, `${id}_${fileSuffix()}.png`));
+  }
+  function exportChartXL(id, ttl) {
+    const ch = PG.charts[id]; if (!ch) { toast('Chart not ready.'); return; }
+    const aoa = [[ttl], ...filterList().map(f => [f[0] + ':', f[1]]), ['Exported', stamp()], ['Unit', 'Nu. million (unless stated)'], [], ['Category', ...ch.data.datasets.map(d => d.label)]];
+    ch.data.labels.forEach((l, i) => aoa.push([l, ...ch.data.datasets.map(d => d.data[i])]));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Chart data'); XLSX.writeFile(wb, `${id}_${fileSuffix()}.xlsx`);
+  }
+  function exportAll() {
+    const s = snapById(PG.selId), t = total(PG.acts), wb = XLSX.utils.book_new(), add = (n, a) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), n);
+    add('Filters & Summary', [['WRI Dashboard — Progress Dashboard export'], ['Exported', stamp()], [], ['FILTERS USED'], ...filterList().map(f => [f[0], f[1]]), [], ['SUMMARY (Nu. million)'], ['Activities', PG.acts.length], ['Budget', t.budget], ['Expenditure', t.exp], ['Balance', t.balance], ['Utilisation %', +t.util.toFixed(2)], ['Physical progress % (budget-weighted)', t.phys == null ? '' : +t.phys.toFixed(2)], ['FY elapsed % at report date', +fyElapsed(s.reportDate).toFixed(1)]]);
+    add('Activities', [['Division', 'FIC', 'Project', 'Activity', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Status', 'Physical %', 'Last updated', 'Updated by', 'Remarks'], ...PG.acts.map(a => [DIV_LABEL[a.division], a.fic, a.project, a.name, a.budget, a.exp, r3(a.budget - a.exp), a.budget > 0 ? +(a.exp / a.budget * 100).toFixed(2) : '', a.noProgress ? '' : a.status, a.pct == null ? '' : a.pct, a.updatedAt ? fDT(a.updatedAt) : '', a.updatedBy || '', a.remarks])]);
+    const gTab = (name, g, lab) => add(name, [[name.split(' ')[0], 'Activities', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Physical %'], ...Object.values(g).map(o => [lab(o.key), o.n, r3(o.budget), r3(o.exp), o.balance, +o.util.toFixed(2), o.phys == null ? '' : +o.phys.toFixed(2)])]);
+    gTab('By Division', group(PG.acts, a => a.division), k => DIV_LABEL[k]); gTab('By Project', group(PG.acts, a => a.fic), k => `${k} ${PROJECTS[k] || ''}`);
+    const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = [r.obc, r.obcT, 0, 0]); o[2] = r3(o[2] + r.b); o[3] = r3(o[3] + r.e); }));
+    add('By Object Code', [['Code', 'Object code', 'Budget', 'Expenditure'], ...Object.values(ob)]);
+    const byDate = {}; PG.snaps.forEach(x => byDate[x.reportDate] = x);
+    add('Weekly Trend', [['Report date', 'Stored at', 'Budget', 'Expenditure', 'Utilisation %'], ...Object.values(byDate).sort((a, b) => a.reportDate.localeCompare(b.reportDate)).map(x => { const tt = total(buildActs(x).filter(pass)); return [x.reportDate, fDT(x.uploadedAt), tt.budget, tt.exp, +tt.util.toFixed(2)]; })]);
+    add('Progress Updates', [['Time', 'By', 'Division', 'Activity', 'Status', 'Physical %', 'Remarks'], ...PG.updates.filter(u => (!PG.f.division || u.division === PG.f.division) && (!PG.f.project || String(u.project_fic) === PG.f.project)).map(u => [fDT(u.created_at), u.updated_by, DIV_LABEL[u.division] || u.division, u.activity_name, u.status, u.pct_physical, u.remarks || ''])]);
+    XLSX.writeFile(wb, `${fileSuffix()}.xlsx`);
+  }
+
+  /* ---------- wiring ---------- */
+  function onFilter() { PG.f.division = $('pgFDivision').value; PG.f.project = $('pgFProject').value; PG.f.status = $('pgFStatus').value; const v = $('pgFSnap').value; PG.selLatest = (v === PG.snaps[PG.snaps.length - 1].id); PG.selId = v; renderAll(); }
+  function reset() { PG.f = { division: '', project: '', status: '' }; PG.selLatest = true; PG.selId = PG.snaps[PG.snaps.length - 1].id; renderAll(); }
+  function tab(t) { PG.tab = t; document.querySelectorAll('#pgTabs .pg-tab').forEach(b => b.classList.toggle('active', b.dataset.t === t)); document.querySelectorAll('#sec-progress .pg-panel').forEach(p => p.classList.toggle('active', p.id === 'pgP-' + t)); if (t === 'overview') setTimeout(renderCharts, 30); }
+  async function refresh(silent) { await loadAll(); if (!silent) toast('Dashboard refreshed'); }
+  function applyAccess() {
+    const on = !!CURRENT_PERMISSION, nav = $('pgNavItem'); if (nav) nav.style.display = on ? '' : 'none';
+    if (!on) {
+      PG.loaded = false; PG.updates = [];
+      if (activeSection()) {
+        $('sec-progress').classList.remove('active'); document.body.classList.remove('prog-mode');
+        document.querySelectorAll('#sidebar .pg-hide').forEach(e => e.classList.remove('pg-hide'));
+        const ex = document.getElementById('sec-executive'); if (ex) ex.classList.add('active');
+        const n0 = document.querySelector('#sidebar .nav-item'); if (n0) n0.classList.add('active');
+      }
+    }
+    return on;
+  }
+  async function onShow() {
+    if (!applyAccess()) return;
+    document.body.classList.add('prog-mode'); document.querySelectorAll('#sidebar .sidebar-section').forEach(s => { const t = s.textContent.trim(); if (t === 'Dataset' || t === 'Filters') s.classList.add('pg-hide'); });
+    if (!PG.loaded) { await resolveRole(); await loadAll(); startLive(); } else { renderAll(); }
+  }
+  function startLive() {
+    try { sb().channel('pg-progress').on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => { loadUpdates().then(renderAll); }).subscribe(); } catch (e) {}
+    setInterval(() => { if (activeSection() && document.visibilityState === 'visible' && !document.querySelector('#pgUpdateBox input:focus, #pgUpdateBox select:focus')) loadAll(); }, 90000);
+  }
+  async function onAuth() { await resolveRole(); if (applyAccess() && PG.loaded) renderAll(); }
+  new MutationObserver(() => { if (activeSection() && PG.loaded) renderCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  applyAccess();
+  Object.assign(window, { pgOnFilter: onFilter, pgReset: reset, pgRefresh: () => refresh(false), pgTab: tab, pgExportAll: exportAll, pgExportPNG: exportPNG, pgExportChartXL: exportChartXL, pgSaveRow: saveRow, pgDelUpdate: delUpdate, pgConfUpdate: confUpdate, pgConfSnap: confSnap, pgDelSnap: delSnap,
+    pgOpenUpload: openUpload, pgCloseUpload: closeUpload, pgOnFile: onFile, pgSaveUpload: saveUpload, progOnShow: onShow, pgOnAuth: onAuth, pgLeave: () => document.body.classList.remove('prog-mode') });
 })();
 </script>
 </body>
