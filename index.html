@@ -2707,6 +2707,7 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
         <div class="kpi-grid" id="pgKpis"></div>
         <div class="panel-card pg-insights" id="pgInsights"></div>
         <div class="pg-grid" id="pgChartGrid"></div>
+        <div class="panel-card" id="pgAdmBox"></div>
       </div>
       <div class="pg-panel" id="pgP-budget">
         <div class="panel-card"><div class="chart-title">Activity-wise Budget, Expenditure &amp; Progress <span id="pgActCount"></span></div><div class="pg-twrap" id="pgActTable"></div></div>
@@ -9635,7 +9636,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
       a.updatedAt = u ? u.created_at : null; a.updatedBy = u ? u.updated_by : null; a.remarks = u ? (u.remarks || '') : ''; return a;
     });
   }
-  const pass = a => (!PG.f.division || a.division === PG.f.division) && (!PG.f.project || a.fic === PG.f.project) && (!PG.f.status || a.status === PG.f.status);
+  const pass = a => !a.noProgress && (!PG.f.division || a.division === PG.f.division) && (!PG.f.project || a.fic === PG.f.project) && (!PG.f.status || a.status === PG.f.status);
   function group(acts, keyFn) {
     const g = {};
     acts.forEach(a => { const k = keyFn(a); const o = g[k] || (g[k] = { key: k, budget: 0, exp: 0, n: 0, wb: 0, wp: 0 }); o.budget += a.budget; o.exp += a.exp; o.n++; if (!a.noProgress && a.budget > 0) { o.wb += a.budget; o.wp += a.budget * a.pct / 100; } });
@@ -9664,7 +9665,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
   function fillSel(id, opts, val) { const el = $(id); el.innerHTML = opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(''); el.value = val; }
   function renderFilters() {
-    const divs = [...new Set(PG.allActs.map(a => a.division))];
+    const divs = [...new Set(PG.allActs.filter(a => !a.noProgress).map(a => a.division))];
     fillSel('pgFDivision', [['', 'All divisions'], ...['WRMD', 'WRPMD', 'WSD', 'UNSPECIFIED'].filter(d => divs.includes(d)).map(d => [d, `${DIV_LABEL[d]}`])], PG.f.division);
     const fics = [...new Set(PG.allActs.filter(a => !PG.f.division || a.division === PG.f.division).map(a => a.fic))];
     if (PG.f.project && !fics.includes(PG.f.project)) PG.f.project = '';
@@ -9686,7 +9687,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     const cnt = st => prog.filter(a => a.status === st).length;
     const lastUp = PG.acts.map(a => a.updatedAt).filter(Boolean).sort().pop();
     $('pgKpis').innerHTML =
-      kpi('Total Budget', 'Nu. ' + fm(t.budget, 2) + ' M', `${PG.acts.length} activities`, '#0a7adb') +
+      kpi('Programme Budget', 'Nu. ' + fm(t.budget, 2) + ' M', `${PG.acts.length} activities · excl. Direction Services &amp; O&amp;M`, '#0a7adb') +
       kpi('Expenditure', 'Nu. ' + fm(t.exp, 2) + ' M', `as of ${fDate(s.reportDate)}`, '#e07800') +
       kpi('Balance', 'Nu. ' + fm(t.balance, 2) + ' M', 'unspent budget', '#15a84e') +
       kpi('Budget Utilisation', fm(t.util, 1) + '%', `FY elapsed ${fm(el, 0)}%`, t.util + 5 < el ? '#e0263d' : '#15a84e') +
@@ -9749,8 +9750,30 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     const ob = {}; acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = { n: `${r.obc} ${r.obcT}`, b: 0, e: 0 }); o.b += r.b; o.e += r.e; }));
     const top = Object.values(ob).sort((a, b) => b.b - a.b).slice(0, 8); PG.obcAll = ob;
     mk('pgObc', { type: 'bar', data: { labels: top.map(o => short(o.n, 34)), datasets: [{ label: 'Budget', data: top.map(o => r3(o.b)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: top.map(o => r3(o.e)), backgroundColor: '#e07800' }] }, options: { indexAxis: 'y', plugins: { tooltip: nu }, scales: { x: { title: { display: true, text: 'Nu. million' } } } } });
+    renderAdmin();
   }
 
+  /* ---------- Direction Services & O&M (recurrent budget, kept separate from programme progress) ---------- */
+  function renderAdmin() {
+    const box = $('pgAdmBox'); if (!box) return; const sn = snapById(PG.selId), L = PG.allActs.filter(a => a.noProgress);
+    ['pgAdm', 'pgAdmTrend'].forEach(id => { if (PG.charts[id]) { PG.charts[id].destroy(); delete PG.charts[id]; } });
+    if (!L.length) { box.style.display = 'none'; return; } box.style.display = '';
+    const el = fyElapsed(sn.reportDate), t = total(L), nm = a => /pay/i.test(a.name) ? 'Direction Services — ' + a.name : a.name;
+    const pace = u => u + 5 < el ? ['bad', 'behind'] : u > el + 5 ? ['warn', 'ahead of'] : ['good', 'in line with'];
+    const card = (id, ttl, type) => `<div class="chart-card"><div class="pg-chead"><div class="chart-title">${ttl} <span>${type}</span></div><div style="display:flex;gap:6px;"><button class="export-btn" onclick="pgExportPNG('${id}','${ttl}')">📷 PNG</button><button class="export-btn" onclick="pgExportChartXL('${id}','${ttl}')" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);color:#2e7d32;border-color:rgba(46,125,50,.3);">📋 Excel</button></div></div><div class="pg-ch"><canvas id="${id}"></canvas></div></div>`;
+    const ob = {}; L.forEach(a => a.obc.forEach(r => { const k = a.key + r.obc, o = ob[k] || (ob[k] = { l: nm(a), c: r.obc, n: r.obcT, b: 0, e: 0 }); o.b += r.b; o.e += r.e; }));
+    box.innerHTML = '<div class="chart-title">Direction Services &amp; Operation and Management Services <span>RECURRENT BUDGET · NOT COUNTED IN PROGRAMME PROGRESS</span></div>' +
+      '<p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">These lines (pay, allowances and running costs) are not project activities, so they are analysed separately and are <b>excluded from the programme budget, utilisation and physical-progress figures above</b>. Division, project and status filters do not apply here.</p>' +
+      '<div class="kpi-grid">' + kpi('Combined Budget', 'Nu. ' + fm(t.budget, 2) + ' M', 'Direction Services + O&amp;M', '#0a7adb') + kpi('Combined Expenditure', 'Nu. ' + fm(t.exp, 2) + ' M', `${fm(t.util, 1)}% utilised`, '#e07800') +
+      L.map(a => kpi(esc(nm(a)), fm(a.budget > 0 ? a.exp / a.budget * 100 : 0, 1) + '%', `Nu. ${fm(a.exp, 2)} of ${fm(a.budget, 2)} M`, '#6a3fb5')).join('') + '</div>' +
+      '<div class="pg-insights"><ul>' + L.map(a => { const u = a.budget > 0 ? a.exp / a.budget * 100 : 0, p = pace(u); return `<li class="${p[0]}"><b>${esc(nm(a))}</b>: Nu. ${fm(a.exp, 3)} M spent of Nu. ${fm(a.budget, 3)} M (<b>${fm(u, 1)}%</b>) — ${p[1] === 'behind' ? 'behind' : p[1]} the ${fm(el, 0)}% of the fiscal year elapsed; balance Nu. ${fm(a.budget - a.exp, 3)} M.</li>`; }).join('') + '</ul></div>' +
+      '<div class="pg-grid">' + card('pgAdm', 'Budget vs Expenditure — Direction Services &amp; O&amp;M', 'BAR') + card('pgAdmTrend', 'Cumulative Expenditure by Weekly Report', 'LINE') + '</div>' +
+      '<div class="pg-twrap"><table class="pg-t" style="min-width:600px"><thead><tr><th>Line</th><th>Object code</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th class="num">Util. %</th></tr></thead><tbody>' +
+      Object.values(ob).map(o => `<tr><td>${esc(o.l)}</td><td>${o.c} ${esc(o.n)}</td><td class="num">${fm(o.b)}</td><td class="num">${fm(o.e)}</td><td class="num">${fm(o.b - o.e)}</td><td class="num">${o.b > 0 ? fm(o.e / o.b * 100, 1) : '—'}</td></tr>`).join('') + '</tbody></table></div>';
+    mk('pgAdm', { type: 'bar', data: { labels: L.map(a => short(nm(a), 34)), datasets: [{ label: 'Budget', data: L.map(a => r3(a.budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: L.map(a => r3(a.exp)), backgroundColor: '#e07800' }] }, options: { scales: { y: { title: { display: true, text: 'Nu. million' } } } } });
+    const byDate = {}; PG.snaps.forEach(x => { byDate[x.reportDate] = x; }); const ts = Object.values(byDate).sort((a, b) => a.reportDate.localeCompare(b.reportDate)), tt = ts.map(x => total(buildActs(x).filter(a => a.noProgress)));
+    mk('pgAdmTrend', { type: 'line', data: { labels: ts.map(x => new Date(x.reportDate).toLocaleDateString('en-GB', { ...tz, day: '2-digit', month: 'short' })), datasets: [{ label: 'Cumulative expenditure', data: tt.map(x => r3(x.exp)), borderColor: '#e07800', backgroundColor: 'rgba(224,120,0,.15)', fill: true, tension: .25, pointRadius: 4 }, { label: 'Budget', data: tt.map(x => r3(x.budget)), borderColor: '#0a7adb', borderDash: [6, 4], pointRadius: 0 }] }, options: { scales: { y: { title: { display: true, text: 'Nu. million' } } } } });
+  }
   /* ---------- tables ---------- */
   const tag = s => `<span class="pg-tag s-${String(s).replace(/\s/g, '')}">${esc(s)}</span>`;
   function renderActTable() {
@@ -9774,10 +9797,10 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
         return `<tr${x.id === PG.selId ? ' class="tot"' : ''}><td>${fDate(x.reportDate)}</td><td>${fDT(x.uploadedAt)}</td><td>${esc(x.uploadedBy)}</td><td>${esc(x.fileName)}</td><td class="num">${fm(b)}</td><td class="num">${fm(e)}</td><td>${st}</td><td>${mg}</td></tr>`; }).join('') + '</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">A new upload stays <b>pending</b> for one day: the Admin can confirm it, or delete it and upload a corrected file. If nothing is done it is confirmed automatically after 24 hours. The Admin can <b>delete any uploaded report at any time</b> (including the built-in starting report). All times are Bhutan Standard Time (BST).</div>';
   }
   function renderDivs() {
-    const box = $('pgDivBox'), ad = isAdmin(), rows = [...PG.allActs].sort((a, b) => ({ review: 0, auto: 1, admin: 2 }[a.divSrc] - { review: 0, auto: 1, admin: 2 }[b.divSrc]) || a.fic.localeCompare(b.fic));
+    const box = $('pgDivBox'), ad = isAdmin(), rows = PG.allActs.filter(a => !a.noProgress).sort((a, b) => ({ review: 0, auto: 1, admin: 2 }[a.divSrc] - { review: 0, auto: 1, admin: 2 }[b.divSrc]) || a.fic.localeCompare(b.fic));
     const opt = (v, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${DIV_LABEL[v]}</option>`;
     const stt = a => a.divSrc === 'admin' ? `<span class="pg-tag s-Completed">✔ Admin-assigned</span><br><small>${esc(a.divBy)} · ${fDT(a.divAt)}</small>` : a.divSrc === 'review' ? `<span class="pg-tag s-Delayed">⏳ Awaiting Admin — auto-assigns ${autoAt(a.firstSeen)}</span>` : '<span class="pg-tag">Auto-assigned (financing code)</span>';
-    const g = group(PG.allActs, a => a.division);
+    const g = group(PG.allActs.filter(a => !a.noProgress), a => a.division);
     box.innerHTML = '<div class="chart-title">Division Assignment <span>ADMIN DECIDES · AUTO-ASSIGNED AFTER 24 HOURS</span></div>' +
       `<p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Each activity belongs to one division, and that division’s focal person updates its progress. The Admin assigns the division here. A newly uploaded activity the Admin has not assigned is placed by its financing code, and is confirmed automatically after one day. ${ad ? '' : '<b>Only the Admin can change assignments.</b>'}${PG.assignLocal ? ' <b>⚠ activity_divisions table not found — assignments are saved in this browser only (run supabase_setup.sql).</b>' : ''}</p>` +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' + Object.keys(g).map(k => `<span class="pg-chip" style="padding:6px 12px;border-radius:999px;background:var(--bg-card2);border:1px solid var(--border);font-size:12px;"><b style="color:${DIV_COLOR[k]}">${DIV_LABEL[k]}</b> · ${g[k].n} activities · Nu. ${fm(g[k].budget, 2)} M</span>`).join('') + '</div>' +
@@ -9903,24 +9926,26 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   /* ---------- exports (filters always shown) ---------- */
   const stamp = () => new Date().toLocaleString('en-GB', tz) + ' BST';
   function dl(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+    const fl = id => id.startsWith('pgAdm') ? [['Scope', 'Direction Services & O&M (recurrent) — division / project / status filters not applied'], filterList()[3]] : filterList();
   function exportPNG(id, ttl) {
     const ch = PG.charts[id]; if (!ch) { toast('Chart not ready.'); return; }
     const src = ch.canvas, sc = 2, pad = 16, hh = 86, w = src.width + pad * 2 * sc, h = src.height + hh * sc / 1 + pad * sc, c = document.createElement('canvas'); c.width = w; c.height = h;
     const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#0a1f3a'; x.font = `700 ${15 * sc}px sans-serif`; x.fillText(ttl, pad * sc, 22 * sc);
-    x.fillStyle = '#375b82'; x.font = `${10.5 * sc}px sans-serif`; filterList().forEach((f, i) => x.fillText(`${f[0]}: ${f[1]}`, pad * sc, (38 + i * 13) * sc));
+    x.fillStyle = '#375b82'; x.font = `${10.5 * sc}px sans-serif`; fl(id).forEach((f, i) => x.fillText(`${f[0]}: ${f[1]}`, pad * sc, (38 + i * 13) * sc));
     x.drawImage(src, pad * sc, hh * sc); x.fillStyle = '#7096b8'; x.font = `${9 * sc}px sans-serif`; x.fillText('WRI Dashboard · Progress · Nu. in millions · exported ' + stamp(), pad * sc, h - 6 * sc);
     c.toBlob(b => dl(b, `${id}_${fileSuffix()}.png`));
   }
   function exportChartXL(id, ttl) {
     const ch = PG.charts[id]; if (!ch) { toast('Chart not ready.'); return; }
-    const aoa = [[ttl], ...filterList().map(f => [f[0] + ':', f[1]]), ['Exported', stamp()], ['Unit', 'Nu. million (unless stated)'], [], ['Category', ...ch.data.datasets.map(d => d.label)]];
+    const aoa = [[ttl], ...fl(id).map(f => [f[0] + ':', f[1]]), ['Exported', stamp()], ['Unit', 'Nu. million (unless stated)'], [], ['Category', ...ch.data.datasets.map(d => d.label)]];
     ch.data.labels.forEach((l, i) => aoa.push([l, ...ch.data.datasets.map(d => d.data[i])]));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Chart data'); XLSX.writeFile(wb, `${id}_${fileSuffix()}.xlsx`);
   }
   function exportAll() {
     const s = snapById(PG.selId), t = total(PG.acts), wb = XLSX.utils.book_new(), add = (n, a) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), n);
-    add('Filters & Summary', [['WRI Dashboard — Progress Dashboard export'], ['Exported', stamp()], [], ['FILTERS USED'], ...filterList().map(f => [f[0], f[1]]), [], ['SUMMARY (Nu. million)'], ['Activities', PG.acts.length], ['Budget', t.budget], ['Expenditure', t.exp], ['Balance', t.balance], ['Utilisation %', +t.util.toFixed(2)], ['Physical progress % (budget-weighted)', t.phys == null ? '' : +t.phys.toFixed(2)], ['FY elapsed % at report date', +fyElapsed(s.reportDate).toFixed(1)]]);
+    add('Filters & Summary', [['WRI Dashboard — Progress Dashboard export'], ['Exported', stamp()], [], ['FILTERS USED'], ...filterList().map(f => [f[0], f[1]]), [], ['SUMMARY (Nu. million) — programme activities only; Direction Services & O&M are on their own sheet'], ['Activities', PG.acts.length], ['Budget', t.budget], ['Expenditure', t.exp], ['Balance', t.balance], ['Utilisation %', +t.util.toFixed(2)], ['Physical progress % (budget-weighted)', t.phys == null ? '' : +t.phys.toFixed(2)], ['FY elapsed % at report date', +fyElapsed(s.reportDate).toFixed(1)]]);
     add('Activities', [['Division', 'FIC', 'Project', 'Activity', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Status', 'Physical %', 'Last updated', 'Updated by', 'Remarks', 'Division source'], ...PG.acts.map(a => [DIV_LABEL[a.division], a.fic, a.project, a.name, a.budget, a.exp, r3(a.budget - a.exp), a.budget > 0 ? +(a.exp / a.budget * 100).toFixed(2) : '', a.noProgress ? '' : a.status, a.pct == null ? '' : a.pct, a.updatedAt ? fDT(a.updatedAt) : '', a.updatedBy || '', a.remarks, a.divSrc === 'admin' ? 'Admin-assigned' : 'Auto (financing code)'])]);
+    add('Direction Svcs & O&M', [['Line', 'Object code', 'Budget', 'Expenditure', 'Balance', 'Utilisation %'], ...PG.allActs.filter(a => a.noProgress).flatMap(a => a.obc.map(r => [a.name, r.obc + ' ' + r.obcT, r.b, r.e, r3(r.b - r.e), r.b > 0 ? +(r.e / r.b * 100).toFixed(2) : '']))]);
     const gTab = (name, g, lab) => add(name, [[name.split(' ')[0], 'Activities', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Physical %'], ...Object.values(g).map(o => [lab(o.key), o.n, r3(o.budget), r3(o.exp), o.balance, +o.util.toFixed(2), o.phys == null ? '' : +o.phys.toFixed(2)])]);
     gTab('By Division', group(PG.acts, a => a.division), k => DIV_LABEL[k]); gTab('By Project', group(PG.acts, a => a.fic), k => `${k} ${PROJECTS[k] || ''}`);
     const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = [r.obc, r.obcT, 0, 0]); o[2] = r3(o[2] + r.b); o[3] = r3(o[3] + r.e); }));
