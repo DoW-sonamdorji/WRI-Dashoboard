@@ -2707,11 +2707,12 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => handleAuthChang
         <div class="kpi-grid" id="pgKpis"></div>
         <div class="panel-card pg-insights" id="pgInsights"></div>
         <div class="pg-grid" id="pgChartGrid"></div>
+        <div class="panel-card"><div class="chart-title">Expenditure by FIC <span>NU. MILLION · EXACT TO 3 DECIMALS</span></div><div class="pg-twrap" id="pgFicOv"></div></div>
         <div class="panel-card" id="pgAdmBox"></div>
       </div>
       <div class="pg-panel" id="pgP-budget">
         <div class="panel-card"><div class="chart-title">Activity-wise Budget, Expenditure &amp; Progress <span id="pgActCount"></span></div><div class="pg-twrap" id="pgActTable"></div></div>
-        <div class="panel-card"><div class="chart-title">Expenditure by Object Code</div><div class="pg-twrap" id="pgObcTable"></div></div>
+        <div class="panel-card"><div class="chart-title">Expenditure by FIC <span>NU. MILLION · EXACT TO 3 DECIMALS</span></div><div class="pg-twrap" id="pgObcTable"></div></div>
         <div class="panel-card"><div class="chart-title">Expenditure Report History — stored by upload time</div><div class="pg-twrap" id="pgSnapList"></div></div>
       </div>
       <div class="pg-panel" id="pgP-divs"><div class="panel-card" id="pgDivBox"></div></div>
@@ -9511,7 +9512,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const tz = { timeZone: 'Asia/Thimphu' };
   const fDate = d => new Date(d).toLocaleDateString('en-GB', { ...tz, weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-  const fDT = d => new Date(d).toLocaleString('en-GB', { ...tz, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' BST';
+  const fDT = d => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { ...tz, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).formatToParts(new Date(d)).map(x => [x.type, x.value])); return `${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute} ${String(p.dayPeriod || '').toUpperCase()} BST`; };
   const norm = s => String(s || '').toLowerCase().replace(/[_\s]+/g, ' ').trim();
   const ACR = new Set(['PES', 'PPP', 'NBS', 'DSS', 'HKH', 'WUAS', 'PMU', 'RGOB', 'WUA', 'O&M']);
   const SMALL = new Set(['and', 'of', 'for', 'to', 'on', 'in', 'the', 'with', 'at', 'a']);
@@ -9719,7 +9720,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
 
   /* ---------- charts ---------- */
-  const CHART_DEFS = [['pgDiv', 'Budget vs Expenditure — Division wise', 'BAR'], ['pgProj', 'Budget vs Expenditure — Project wise', 'BAR'], ['pgPhys', 'Financial vs Physical Progress (%) — Division wise', 'BAR'],
+  const CHART_DEFS = [['pgDiv', 'Budget vs Expenditure — Division wise', 'BAR'], ['pgProj', 'Budget vs Expenditure — FIC wise', 'BAR'], ['pgPhys', 'Financial vs Physical Progress (%) — Division wise', 'BAR'],
     ['pgStatus', 'Activity Status', 'DONUT'], ['pgTrend', 'Cumulative Expenditure by Weekly Report', 'LINE'], ['pgObc', 'Budget vs Expenditure — by Object Code (top 8)', 'BAR']];
   function buildCards() {
     $('pgChartGrid').innerHTML = CHART_DEFS.map(c => `<div class="chart-card"><div class="pg-chead"><div class="chart-title">${c[1]} <span>${c[2]}</span></div><div style="display:flex;gap:6px;"><button class="export-btn" onclick="pgExportPNG('${c[0]}','${c[1].replace(/'/g, '')}')">📷 PNG</button><button class="export-btn" onclick="pgExportChartXL('${c[0]}','${c[1].replace(/'/g, '')}')" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);color:#2e7d32;border-color:rgba(46,125,50,.3);">📋 Excel</button></div></div><div class="pg-ch"><canvas id="${c[0]}"></canvas></div></div>`).join('');
@@ -9739,7 +9740,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     const gd = group(acts, a => a.division), dk = Object.keys(gd);
     mk('pgDiv', { type: 'bar', data: { labels: dk.map(k => DIV_LABEL[k]), datasets: [{ label: 'Budget', data: dk.map(k => r3(gd[k].budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: dk.map(k => r3(gd[k].exp)), backgroundColor: '#e07800' }] }, options: { plugins: { tooltip: nu }, scales: { y: { title: { display: true, text: 'Nu. million' } } } } });
     const gp = group(acts, a => a.fic), pk = Object.keys(gp);
-    mk('pgProj', { type: 'bar', data: { labels: pk.map(k => `${k} · ${short(PROJECTS[k] || k, 30)}`), datasets: [{ label: 'Budget', data: pk.map(k => r3(gp[k].budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: pk.map(k => r3(gp[k].exp)), backgroundColor: '#e07800' }] }, options: { indexAxis: 'y', plugins: { tooltip: nu }, scales: { x: { title: { display: true, text: 'Nu. million' } } } } });
+    mk('pgProj', { type: 'bar', data: { labels: pk.map(k => `FIC ${k} · ${short(PROJECTS[k] || k, 26)}`), datasets: [{ label: 'Budget', data: pk.map(k => r3(gp[k].budget)), backgroundColor: '#5aadff' }, { label: 'Expenditure', data: pk.map(k => r3(gp[k].exp)), backgroundColor: '#e07800' }] }, options: { indexAxis: 'y', plugins: { tooltip: nu }, scales: { x: { title: { display: true, text: 'Nu. million' } } } } });
     const pdk = dk.filter(k => gd[k].phys != null);
     mk('pgPhys', { type: 'bar', data: { labels: pdk.map(k => DIV_LABEL[k]), datasets: [{ label: 'Financial (expenditure ÷ budget)', data: pdk.map(k => +gd[k].util.toFixed(1)), backgroundColor: '#e07800' }, { label: 'Physical (budget-weighted)', data: pdk.map(k => +gd[k].phys.toFixed(1)), backgroundColor: '#15a84e' }] }, options: { scales: { y: { min: 0, max: 100, title: { display: true, text: '%' } } } } });
     const prog = acts.filter(a => !a.noProgress);
@@ -9784,9 +9785,14 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
       `<tr class="tot"><td colspan="3">TOTAL</td><td class="num">${fm(t.budget)}</td><td class="num">${fm(t.exp)}</td><td class="num">${fm(t.balance)}</td><td>${fm(t.util, 1)}%</td><td></td><td class="num">${t.phys == null ? '—' : fm(t.phys, 1)}</td><td></td></tr></tbody></table>`;
   }
   function renderObc() {
-    const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = { c: r.obc, n: r.obcT, b: 0, e: 0 }); o.b += r.b; o.e += r.e; }));
-    const rows = Object.values(ob).sort((a, b) => b.b - a.b);
-    $('pgObcTable').innerHTML = `<table class="pg-t"><thead><tr><th>Code</th><th>Object code</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th class="num">Util. %</th></tr></thead><tbody>` + rows.map(o => `<tr><td>${o.c}</td><td>${esc(o.n)}</td><td class="num">${fm(o.b)}</td><td class="num">${fm(o.e)}</td><td class="num">${fm(o.b - o.e)}</td><td class="num">${o.b > 0 ? fm(o.e / o.b * 100, 1) : '—'}</td></tr>`).join('') + '</tbody></table>';
+    const g = group(PG.acts, a => a.fic), t = total(PG.acts), p3 = v => (Math.trunc(v * 1000) / 1000).toFixed(3), x3 = v => Number(r3(v)).toFixed(3);
+    const rows = Object.values(g).sort((a, b) => a.key.localeCompare(b.key)), AL = PG.allActs.filter(a => a.noProgress), at = total(AL);
+    const html = `<table class="pg-t" style="min-width:720px"><thead><tr><th>FIC</th><th>FIC name</th><th class="num">Activities</th><th class="num">Budget</th><th class="num">Expenditure</th><th class="num">Balance</th><th class="num">Utilisation %</th><th class="num">Share of expenditure %</th></tr></thead><tbody>` +
+      (rows.map(o => `<tr><td><b>${o.key}</b></td><td>${esc(PROJECTS[o.key] || o.key)}</td><td class="num">${o.n}</td><td class="num">${x3(o.budget)}</td><td class="num">${x3(o.exp)}</td><td class="num">${x3(o.budget - o.exp)}</td><td class="num">${o.budget > 0 ? p3(o.exp / o.budget * 100) : '—'}</td><td class="num">${t.exp !== 0 ? p3(o.exp / t.exp * 100) : '—'}</td></tr>`).join('') || '<tr><td colspan="8">No FIC matches the filters.</td></tr>') +
+      `<tr class="tot"><td colspan="2">TOTAL (programme activities)</td><td class="num">${PG.acts.length}</td><td class="num">${x3(t.budget)}</td><td class="num">${x3(t.exp)}</td><td class="num">${x3(t.budget - t.exp)}</td><td class="num">${t.budget > 0 ? p3(t.exp / t.budget * 100) : '—'}</td><td class="num">${t.exp !== 0 ? '100.000' : '—'}</td></tr>` +
+      (AL.length ? `<tr><td><b>0001</b></td><td>Direction Services &amp; Operation and Management Services <small>(shown separately — not in the programme total)</small></td><td class="num">${AL.length}</td><td class="num">${x3(at.budget)}</td><td class="num">${x3(at.exp)}</td><td class="num">${x3(at.budget - at.exp)}</td><td class="num">${at.budget > 0 ? p3(at.exp / at.budget * 100) : '—'}</td><td class="num">—</td></tr>` : '') +
+      `</tbody></table><div style="padding:8px 12px;font-size:11.5px;color:var(--text-dim)">Amounts are in Nu. million, exactly as in the Expenditure Report (3 decimals, not rounded). Percentages are cut at 3 decimals, not rounded. Follows the Division / Status filters and the selected report.</div>`;
+    $('pgObcTable').innerHTML = html; if ($('pgFicOv')) $('pgFicOv').innerHTML = html;
   }
   function renderSnapList() {
     const bt = (fn, id, t) => `<button class="pg-btn ghost" style="padding:3px 9px;font-size:11px" onclick="${fn}('${esc(id)}')">${t}</button> `;
@@ -9924,7 +9930,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     x.confirmed = true; toast('Expenditure report confirmed ✓'); renderAll();
   }
   /* ---------- exports (filters always shown) ---------- */
-  const stamp = () => new Date().toLocaleString('en-GB', tz) + ' BST';
+  const stamp = () => fDT(new Date());
   function dl(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
     const fl = id => id.startsWith('pgAdm') ? [['Scope', 'Direction Services & O&M (recurrent) — division / project / status filters not applied'], filterList()[3]] : filterList();
   function exportPNG(id, ttl) {
@@ -9947,7 +9953,7 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
     add('Activities', [['Division', 'FIC', 'Project', 'Activity', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Status', 'Physical %', 'Last updated', 'Updated by', 'Remarks', 'Division source'], ...PG.acts.map(a => [DIV_LABEL[a.division], a.fic, a.project, a.name, a.budget, a.exp, r3(a.budget - a.exp), a.budget > 0 ? +(a.exp / a.budget * 100).toFixed(2) : '', a.noProgress ? '' : a.status, a.pct == null ? '' : a.pct, a.updatedAt ? fDT(a.updatedAt) : '', a.updatedBy || '', a.remarks, a.divSrc === 'admin' ? 'Admin-assigned' : 'Auto (financing code)'])]);
     add('Direction Svcs & O&M', [['Line', 'Object code', 'Budget', 'Expenditure', 'Balance', 'Utilisation %'], ...PG.allActs.filter(a => a.noProgress).flatMap(a => a.obc.map(r => [a.name, r.obc + ' ' + r.obcT, r.b, r.e, r3(r.b - r.e), r.b > 0 ? +(r.e / r.b * 100).toFixed(2) : '']))]);
     const gTab = (name, g, lab) => add(name, [[name.split(' ')[0], 'Activities', 'Budget', 'Expenditure', 'Balance', 'Utilisation %', 'Physical %'], ...Object.values(g).map(o => [lab(o.key), o.n, r3(o.budget), r3(o.exp), o.balance, +o.util.toFixed(2), o.phys == null ? '' : +o.phys.toFixed(2)])]);
-    gTab('By Division', group(PG.acts, a => a.division), k => DIV_LABEL[k]); gTab('By Project', group(PG.acts, a => a.fic), k => `${k} ${PROJECTS[k] || ''}`);
+    gTab('By Division', group(PG.acts, a => a.division), k => DIV_LABEL[k]); gTab('By FIC', group(PG.acts, a => a.fic), k => `${k} ${PROJECTS[k] || ''}`); Object.keys(wb.Sheets['By FIC']).forEach(c => { if (/^[CDE]\d+$/.test(c) && typeof wb.Sheets['By FIC'][c].v === 'number') wb.Sheets['By FIC'][c].z = '0.000'; });
     const ob = {}; PG.acts.forEach(a => a.obc.forEach(r => { const o = ob[r.obc] || (ob[r.obc] = [r.obc, r.obcT, 0, 0]); o[2] = r3(o[2] + r.b); o[3] = r3(o[3] + r.e); }));
     add('By Object Code', [['Code', 'Object code', 'Budget', 'Expenditure'], ...Object.values(ob)]);
     const byDate = {}; PG.snaps.forEach(x => byDate[x.reportDate] = x);
