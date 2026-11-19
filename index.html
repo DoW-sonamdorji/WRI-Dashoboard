@@ -739,6 +739,9 @@ body {
     min-height: 44px; border-radius: 10px; border: 1px solid rgba(10,122,219,.35); background: #fff; color: #0a5fa8;
     font: 700 13px var(--font-body); text-align: left; padding: 0 14px; cursor: pointer;
   }
+  /* #app (z-index:1) formed a stacking context that trapped the drawer BELOW the dark backdrop → every tap hit the backdrop and closed/blocked the menu */
+  #app { z-index: auto !important; }
+  #sidebar { touch-action: pan-y; }
   #sidebar .nav-item { min-height: 46px; display: flex; align-items: center; }
   #sidebar select, #sidebar input { font-size: 16px !important; min-height: 44px; }   /* 16px stops iOS zooming on focus */
 
@@ -9556,6 +9559,29 @@ window.addEventListener('DOMContentLoaded', refreshDatasetList);
   }
   if (window.wriDrawer) window.wriDrawer.beforeOpen = syncAccount;
   syncAccount();
+
+  /* Section tabs under the header (phones/tablets): same sections as the sidebar + a Filters shortcut */
+  const inner = document.getElementById('app-inner'), app = document.getElementById('app');
+  if (inner && app && !document.getElementById('mobileNav')) {
+    const nav = document.createElement('div'); nav.id = 'mobileNav'; nav.setAttribute('role', 'tablist');
+    const items = [...sb.querySelectorAll('.nav-item')];
+    items.forEach(it => {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.textContent = it.textContent.replace(/\s+/g, ' ').trim();
+      b.addEventListener('click', () => { it.click(); const m = document.getElementById('main'); if (m) m.scrollTop = 0; sync(); b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); });
+      nav.appendChild(b);
+    });
+    const fb = document.createElement('button'); fb.type = 'button'; fb.className = 'mn-filters'; fb.textContent = '⚙ Filters';
+    fb.addEventListener('click', () => {
+      if (!window.wriDrawer) return; window.wriDrawer.open();
+      setTimeout(() => { const l = [...sb.querySelectorAll('.sidebar-label')].find(x => /^filters$/i.test(x.textContent.trim())); if (l) sb.scrollTop = Math.max(0, l.offsetTop - 70); }, 60);
+    });
+    nav.insertBefore(fb, nav.firstChild);
+    inner.insertBefore(nav, app);
+    function sync() { const bs = [...nav.querySelectorAll('button:not(.mn-filters)')]; items.forEach((it, i) => { if (bs[i]) { bs[i].classList.toggle('active', it.classList.contains('active')); bs[i].setAttribute('aria-selected', it.classList.contains('active')); } }); }
+    items.forEach(it => new MutationObserver(sync).observe(it, { attributes: true, attributeFilter: ['class'] }));
+    sync();
+  }
 })();
 </script>
 </body>
